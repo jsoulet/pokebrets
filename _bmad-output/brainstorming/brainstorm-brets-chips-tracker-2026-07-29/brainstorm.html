@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brets Chips Tracker — Keepsake de Brainstorm</title>
+  <style>
+    :root {
+      --bg: #fff6dd;
+      --paper: #fffaf0;
+      --ink: #402616;
+      --chip: #f6c453;
+      --paprika: #f06b3c;
+      --forest: #60864b;
+      --berry: #b63f6a;
+      --night: #1b1533;
+      --glow: #7af0ff;
+      --tape: #f8e58d;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 20% 10%, rgba(255,255,255,.65), transparent 20%),
+        radial-gradient(circle at 80% 20%, rgba(246,196,83,.25), transparent 18%),
+        linear-gradient(180deg, #fff8ea, #ffe7ba 45%, #ffd798 100%);
+      overflow-x: hidden;
+    }
+
+    .crumbs {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+    .crumb {
+      position: absolute;
+      font-size: 20px;
+      opacity: .12;
+      animation: drift linear infinite;
+    }
+    @keyframes drift {
+      from { transform: translateY(-10vh) rotate(0deg); }
+      to { transform: translateY(110vh) rotate(360deg); }
+    }
+
+    main {
+      position: relative;
+      z-index: 1;
+      width: min(1100px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 56px;
+    }
+
+    .hero {
+      position: relative;
+      background: linear-gradient(135deg, rgba(255,250,240,.92), rgba(255,236,189,.92));
+      border: 3px solid rgba(64,38,22,.15);
+      border-radius: 28px;
+      padding: 30px;
+      box-shadow: 0 18px 45px rgba(110,72,22,.15);
+      overflow: hidden;
+    }
+    .hero::before,
+    .hero::after {
+      content: "🥔";
+      position: absolute;
+      font-size: 64px;
+      opacity: .12;
+    }
+    .hero::before { top: 8px; right: 18px; transform: rotate(12deg); }
+    .hero::after { bottom: 8px; left: 18px; transform: rotate(-18deg); }
+    .eyebrow {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px dashed rgba(64,38,22,.25);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .14em;
+    }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 {
+      font-size: clamp(2.3rem, 5vw, 4.5rem);
+      line-height: .95;
+      margin: 16px 0 14px;
+    }
+    .lead {
+      max-width: 760px;
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .pill {
+      background: rgba(255,255,255,.75);
+      border: 1px solid rgba(64,38,22,.12);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 700;
+    }
+
+    section {
+      margin-top: 24px;
+      border-radius: 26px;
+      padding: 24px;
+      box-shadow: 0 14px 30px rgba(89,60,25,.08);
+    }
+
+    .wisdom {
+      background: linear-gradient(180deg, #f8efd7, #efe0ba);
+      border: 2px solid #b79258;
+      position: relative;
+    }
+    .wisdom::before {
+      content: "Carnet magique";
+      position: absolute;
+      top: -12px;
+      left: 18px;
+      background: #7f5a31;
+      color: #fff4d6;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .tile {
+      background: rgba(255,251,238,.9);
+      border: 2px dashed rgba(127,90,49,.35);
+      border-radius: 18px;
+      padding: 14px;
+      min-height: 114px;
+    }
+    .tile strong { display: block; margin-bottom: 8px; }
+    .archived {
+      background: repeating-linear-gradient(-45deg, rgba(255,255,255,.45), rgba(255,255,255,.45) 8px, rgba(180,180,180,.18) 8px, rgba(180,180,180,.18) 16px);
+      opacity: .88;
+    }
+    .badge {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #e9ddc2;
+    }
+
+    .dream {
+      color: #f7f2ff;
+      background:
+        radial-gradient(circle at top right, rgba(122,240,255,.25), transparent 30%),
+        linear-gradient(135deg, #23194a, #100d23 65%);
+      border: 2px solid rgba(122,240,255,.3);
+    }
+    .dream h2, .dream h3 { color: #fff; }
+    .dream-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+    .vial {
+      border-radius: 18px;
+      padding: 16px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(122,240,255,.2);
+      backdrop-filter: blur(2px);
+    }
+    .vial.realiste {
+      background: rgba(246,196,83,.12);
+      border-color: rgba(246,196,83,.35);
+    }
+
+    .infomercial {
+      background: linear-gradient(135deg, #fff0f3, #ffd3a8 60%, #ffe93c);
+      border: 3px solid #ff2a6d;
+      overflow: hidden;
+      position: relative;
+    }
+    .burst {
+      display: inline-block;
+      transform: rotate(-6deg);
+      background: #ff2a6d;
+      color: white;
+      font-weight: 900;
+      padding: 8px 14px;
+      border-radius: 14px;
+      box-shadow: 4px 4px 0 #402616;
+      margin-bottom: 12px;
+    }
+    .wait {
+      margin: 18px 0;
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(255,255,255,.74);
+      border: 2px dashed #ff7f11;
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+
+    .postit-wrap {
+      display: flex;
+      justify-content: center;
+    }
+    .postit {
+      background: linear-gradient(180deg, #fffaa8, #f5ee73);
+      color: #463f05;
+      width: min(520px, 100%);
+      padding: 26px 24px 30px;
+      border-radius: 6px 6px 22px 6px;
+      box-shadow: 0 24px 30px rgba(0,0,0,.12);
+      transform: rotate(-2deg);
+      position: relative;
+    }
+    .postit::before {
+      content: "";
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      width: 120px;
+      height: 30px;
+      transform: translateX(-50%) rotate(2deg);
+      background: rgba(248,229,141,.72);
+      border: 1px solid rgba(70,63,5,.14);
+    }
+    .postit ul {
+      margin: 0;
+      padding-left: 18px;
+      line-height: 1.8;
+      font-weight: 700;
+    }
+
+    .climax {
+      background: radial-gradient(circle at top, #fff5a8, #ffbf69 45%, #f06b3c 100%);
+      border: 3px solid rgba(255,255,255,.5);
+      color: #41220f;
+      text-align: center;
+      padding: 34px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .climax::before,
+    .climax::after {
+      content: "✨";
+      position: absolute;
+      font-size: 48px;
+      opacity: .5;
+      animation: pulse 2.8s ease-in-out infinite;
+    }
+    .climax::before { top: 18px; left: 22px; }
+    .climax::after { right: 24px; bottom: 18px; animation-delay: .6s; }
+    @keyframes pulse {
+      0%,100% { transform: scale(1) rotate(0deg); }
+      50% { transform: scale(1.18) rotate(12deg); }
+    }
+    .big {
+      font-size: clamp(1.9rem, 4vw, 3.2rem);
+      line-height: 1.05;
+      margin-bottom: 12px;
+    }
+    .summary-boxes {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      text-align: left;
+      margin-top: 22px;
+    }
+    .summary-box {
+      background: rgba(255,255,255,.78);
+      border-radius: 18px;
+      padding: 16px;
+      border: 1px solid rgba(64,38,22,.14);
+    }
+    .summary-box h3 { margin-bottom: 8px; }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 16px;
+      font-weight: 700;
+      opacity: .82;
+    }
+
+    .cta {
+      margin-top: 18px;
+      border: 0;
+      background: #402616;
+      color: #fff7e8;
+      padding: 12px 18px;
+      border-radius: 999px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 10px 18px rgba(64,38,22,.18);
+    }
+    .cta:hover { transform: translateY(-1px); }
+
+    #snack-burst {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 3;
+    }
+    .pop {
+      position: absolute;
+      font-size: 22px;
+      animation: pop 1.4s ease-out forwards;
+    }
+    @keyframes pop {
+      0% { opacity: 1; transform: translate(0,0) scale(.8) rotate(0deg); }
+      100% { opacity: 0; transform: translate(var(--x), var(--y)) scale(1.5) rotate(180deg); }
+    }
+
+    @media (max-width: 700px) {
+      section, .hero { padding: 20px; border-radius: 22px; }
+      .wait { font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="crumbs" aria-hidden="true">
+    <span class="crumb" style="left:6%; animation-duration: 17s; animation-delay:-1s;">🥔</span>
+    <span class="crumb" style="left:18%; animation-duration: 23s; animation-delay:-9s;">✨</span>
+    <span class="crumb" style="left:31%; animation-duration: 19s; animation-delay:-5s;">🧂</span>
+    <span class="crumb" style="left:47%; animation-duration: 26s; animation-delay:-7s;">🥔</span>
+    <span class="crumb" style="left:63%; animation-duration: 21s; animation-delay:-12s;">📦</span>
+    <span class="crumb" style="left:78%; animation-duration: 18s; animation-delay:-4s;">✨</span>
+    <span class="crumb" style="left:90%; animation-duration: 24s; animation-delay:-15s;">🍟</span>
+  </div>
+  <div id="snack-burst" aria-hidden="true"></div>
+
+  <main>
+    <header class="hero">
+      <span class="eyebrow">Souvenir de brainstorming • Brets Chips Tracker</span>
+      <h1>Un pokédex de chips<br/>entre potes, pas une licorne.</h1>
+      <p class="lead">
+        Ici, l'idée n'a jamais voulu devenir une machine compliquée. Elle voulait juste devenir un petit plaisir de collection&nbsp;:
+        lister les saveurs Brets, cocher celles qu'on a goûtées, garder ça en local, et emporter le tout dans la poche comme une mini PWA.
+      </p>
+      <div class="pill-row">
+        <span class="pill">✅ Catalogue de saveurs Brets</span>
+        <span class="pill">✅ Goûté / pas goûté</span>
+        <span class="pill">✅ Stockage local uniquement</span>
+        <span class="pill">✅ Webapp installable</span>
+      </div>
+      <button class="cta" id="shake">Secouer le sachet</button>
+    </header>
+
+    <section class="wisdom">
+      <h2>1. Indigenous Wisdom — le carnet magique ancestral</h2>
+      <p>
+        La sagesse du cercle a parlé&nbsp;: d'abord <strong>toutes</strong> les saveurs, ensuite la quête. Pas de réseau social du croustillant, pas de jugement public,
+        juste un <strong>carnet personnel privé</strong> où chacun coche sa propre exploration.
+      </p>
+      <div class="grid">
+        <article class="tile">
+          <strong>Grille bingo sacrée</strong>
+          Des cases visuelles, comme une carte de collection, pour nourrir l'élan «&nbsp;je veux toutes les trouver&nbsp;».
+        </article>
+        <article class="tile">
+          <strong>Magie réaliste</strong>
+          La liste des saveurs doit sembler toujours fraîche à l'ouverture, même si les goûts cochés restent stockés localement.
+        </article>
+        <article class="tile archived">
+          <strong>Saveur discontinuée</strong>
+          On ne l'efface pas&nbsp;: on la garde visible, mais grisée.
+          <span class="badge">Archivée</span>
+        </article>
+        <article class="tile">
+          <strong>Zéro parade sociale</strong>
+          Le plaisir est intime, un peu maniaque, très collectionneur.
+        </article>
+      </div>
+    </section>
+
+    <section class="dream">
+      <h2>2. Dream Fusion Laboratory — du délire cosmique au code-barres</h2>
+      <p>
+        Le labo a d'abord rêvé trop grand, comme il se doit. Puis il a ramené le rêve sur Terre.
+      </p>
+      <div class="dream-grid">
+        <article class="vial">
+          <h3>Rêve impossible</h3>
+          <p>Analyse buccale automatique. Capteurs cérébraux implantés. Détection instantanée de la saveur et de l'amour ressenti. Auto-cochage. Auto-notation. Le snack cybernétique ultime.</p>
+        </article>
+        <article class="vial realiste">
+          <h3>Atterrissage réaliste</h3>
+          <p>Version raisonnable du fantasme&nbsp;: <strong>scanner le code-barres</strong> du paquet pour identifier la saveur et cocher automatiquement.</p>
+        </article>
+        <article class="vial">
+          <h3>Appendice du rêve</h3>
+          <p>Si le scan ne reconnaît rien&nbsp;: ajouter une nouvelle saveur à la main, avec photo du paquet et note associée.</p>
+        </article>
+      </div>
+      <p><strong>Verdict final du labo&nbsp;:</strong> le scan code-barres est séduisant, mais jugé <em>overkill</em> pour le MVP. L'ajout manuel de saveur suit la même sortie de piste.</p>
+    </section>
+
+    <section class="infomercial">
+      <div class="burst">INFOPUB À 3H DU MATIN</div>
+      <h2>3. Infomercial at 3AM — « vous avez déjà oublié une saveur goûtée ?! »</h2>
+      <p>
+        Imaginez&nbsp;: vous êtes devant un rayon. Une saveur vous regarde. Vous vous dites «&nbsp;je l'ai déjà mangée... ou c'était une autre Brets bizarre&nbsp;?&nbsp;»
+        Fin du drame. Cette appli devient un <strong>aide-mémoire de poche</strong>, et mieux encore&nbsp;: une petite machine à collectionner, façon pokédex croustillant.
+      </p>
+      <div class="wait">MAIS ATTENDS IL Y A ENCORE MIEUX&nbsp;: la chose est <strong>installable</strong>, tient dans la poche, et reste consultable partout comme une <strong>PWA</strong> même sans connexion.</div>
+      <p>
+        Puis la voix grave du bon sens coupe la musique&nbsp;: ce projet doit rester <strong>petit, fun, perso entre potes</strong>. Pas une startup. Pas un produit à scaler. Juste un bon délire bien cadré.
+      </p>
+    </section>
+
+    <section>
+      <h2>4. Le Post-it sur le Frigo — le test des 3 secondes</h2>
+      <div class="postit-wrap">
+        <div class="postit">
+          <h3>Si ça tient sur un post-it, c'est probablement le vrai MVP.</h3>
+          <ul>
+            <li>Voir toutes les saveurs Brets</li>
+            <li>Cocher «&nbsp;goûté&nbsp;» / «&nbsp;pas goûté&nbsp;»</li>
+            <li>Garder mes coches sur mon appareil</li>
+            <li>L'ouvrir comme une app installée</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="climax">
+      <div class="eyebrow">Synthèse finale</div>
+      <h2 class="big">Le cœur du projet est minuscule — et c'est exactement sa force.</h2>
+      <p>
+        Le Brets Chips Tracker devient une <strong>webapp installable</strong> avec un <strong>catalogue JSON statique embarqué</strong> pour garder la liste des saveurs à jour côté app,
+        tandis que l'état <strong>goûté / pas goûté</strong> vit tranquillement en <strong>local storage</strong> sur l'appareil.
+      </p>
+      <div class="summary-boxes">
+        <article class="summary-box">
+          <h3>MVP retenu</h3>
+          <p>Catalogue complet des saveurs + checklist goûté/pas goûté + stockage local + PWA installable.</p>
+        </article>
+        <article class="summary-box">
+          <h3>Tension résolue</h3>
+          <p><strong>Catalogue toujours frais</strong> sans backend&nbsp;: le catalogue est livré par l'app, le vécu utilisateur reste local.</p>
+        </article>
+        <article class="summary-box">
+          <h3>Hors scope assumé</h3>
+          <p>Scan code-barres écarté. Ajout manuel de nouvelle saveur écarté. Trop de mécanique pour un projet qui veut rester léger.</p>
+        </article>
+        <article class="summary-box">
+          <h3>Plus tard, peut-être</h3>
+          <p>Notation et commentaire restent un prolongement naturel possible, mais pas nécessaires pour le premier plaisir de collection.</p>
+        </article>
+      </div>
+      <p class="footer-note">Une grille bingo chaleureuse, quelques badges d'archive pour les saveurs discontinuées, et surtout&nbsp;: aucune ambition de conquérir le monde. Juste cocher des chips entre amis. 🥔✨</p>
+    </section>
+  </main>
+
+  <script>
+    const burst = document.getElementById('snack-burst');
+    const button = document.getElementById('shake');
+    const icons = ['🥔', '✨', '🧂', '🍟'];
+
+    function popSnackWave() {
+      const centerX = window.innerWidth / 2;
+      const centerY = 120;
+      for (let i = 0; i < 18; i++) {
+        const el = document.createElement('span');
+        el.className = 'pop';
+        el.textContent = icons[i % icons.length];
+        el.style.left = centerX + 'px';
+        el.style.top = centerY + 'px';
+        el.style.setProperty('--x', (Math.random() * 320 - 160) + 'px');
+        el.style.setProperty('--y', (Math.random() * 220 + 40) + 'px');
+        burst.appendChild(el);
+        setTimeout(() => el.remove(), 1400);
+      }
+    }
+
+    button.addEventListener('click', popSnackWave);
+  </script>
+</body>
+</html>

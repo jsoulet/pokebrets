@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Crounch — Détail saveur (mock)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- tagline: Recoleta (brets.fr) est une police commerciale (Latinotype) -> Fraunces utilisée ici comme stand-in visuel libre, cf. DESIGN.md ASSUMPTION -->
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/*
+  Mock illustrates:
+  - DESIGN.md: Colors (primary moutarde #DDA138, accent rouge-chips #E8482C, success), Shapes (rounded/lg),
+    Components (button-primary, section-divider zigzag)
+  - EXPERIENCE.md: Information Architecture (Dialog détail), Component Patterns (Dialog détail row),
+    Interaction Primitives (tap en dehors / Échap ferme la Dialog)
+  Palette/zigzag inspired by brets.fr (imports/brets-fr-03) — palette/shape only, not the page layout.
+*/
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #EDEAE0;
+  padding: 40px;
+  display: flex;
+  gap: 40px;
+}
+.phone {
+  width: 360px;
+  height: 720px;
+  background: #FDF0DD;
+  border-radius: 36px;
+  border: 10px solid #1a1a1a;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+}
+.backdrop-grid {
+  position: absolute;
+  inset: 0;
+  padding: 60px 16px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  opacity: 0.45;
+  filter: blur(1px);
+}
+.bg-tile { aspect-ratio: 1; border-radius: 16px; background: #FFFDF7; border: 1px solid #F0DCB0; position: relative; }
+.bg-tile.tasted::after {
+  content: '✓';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #3FA34D;
+  color: #FFFDF7;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(36, 26, 8, 0.4);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.zigzag {
+  height: 14px;
+  background: #DDA138;
+  clip-path: polygon(
+    0% 0%, 4% 100%, 8% 0%, 12% 100%, 16% 0%, 20% 100%, 24% 0%, 28% 100%,
+    32% 0%, 36% 100%, 40% 0%, 44% 100%, 48% 0%, 52% 100%, 56% 0%, 60% 100%,
+    64% 0%, 68% 100%, 72% 0%, 76% 100%, 80% 0%, 84% 100%, 88% 0%, 92% 100%,
+    96% 0%, 100% 100%, 100% 0%
+  );
+}
+.dialog {
+  width: 100%;
+  background: #FDF0DD;
+  border-radius: 0;
+  padding: 24px 20px 28px;
+  box-shadow: 0 -8px 24px rgba(0,0,0,0.2);
+}
+.dialog .visual {
+  width: 100%;
+  height: 160px;
+  border-radius: 16px;
+  background: #F0DCB0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56px;
+  margin-bottom: 16px;
+  position: relative;
+}
+.visual-check {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #3FA34D;
+  color: #FFFDF7;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dialog h2 {
+  font-family: 'Fraunces', Georgia, serif; /* stand-in libre pour Recoleta (tagline), cf. DESIGN.md ASSUMPTION licence */
+  font-weight: 600;
+  font-size: 22px;
+  color: #3A2100;
+  margin: 0 0 4px;
+}
+.dialog .status {
+  font-size: 13px;
+  color: #6B6456;
+  margin: 0 0 20px;
+}
+.btn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+}
+.btn-primary { background: #DDA138; color: #241A08; }
+.btn-tasted { background: #3FA34D; color: #FFFDF7; }
+.close-hint {
+  text-align: center;
+  font-size: 11px;
+  color: #6B6456;
+  margin-top: 12px;
+}
+.caption { font-size: 12px; color: #6B6456; margin: 8px 0 0; text-align: center; }
+.frame-col { display: flex; flex-direction: column; align-items: center; }
+</style>
+</head>
+<body>
+
+<div class="frame-col">
+  <div class="phone">
+    <div class="backdrop-grid">
+      <div class="bg-tile tasted"></div><div class="bg-tile"></div><div class="bg-tile"></div>
+      <div class="bg-tile"></div><div class="bg-tile tasted"></div><div class="bg-tile"></div>
+    </div>
+    <div class="scrim">
+      <div class="zigzag"></div>
+      <div class="dialog">
+        <div class="visual">🍟</div>
+        <h2>Crème &amp; Ciboulette</h2>
+        <p class="status">Pas encore goûtée</p>
+        <button class="btn btn-primary">Marquer comme goûtée</button>
+        <p class="close-hint">Tap en dehors ou Échap pour fermer</p>
+      </div>
+    </div>
+  </div>
+  <p class="caption">Dialog détail — état "pas goûtée", ouverte depuis l'icône info d'une tuile.</p>
+</div>
+
+<div class="frame-col">
+  <div class="phone">
+    <div class="backdrop-grid">
+      <div class="bg-tile tasted"></div><div class="bg-tile"></div><div class="bg-tile"></div>
+      <div class="bg-tile"></div><div class="bg-tile tasted"></div><div class="bg-tile"></div>
+    </div>
+    <div class="scrim">
+      <div class="zigzag"></div>
+      <div class="dialog">
+        <div class="visual">🍟<div class="visual-check">✓</div></div>
+        <h2>Barbecue Fumé</h2>
+        <p class="status">✅ Goûtée</p>
+        <button class="btn btn-tasted">Marquer comme pas goûtée</button>
+        <p class="close-hint">Tap en dehors ou Échap pour fermer</p>
+      </div>
+    </div>
+  </div>
+  <p class="caption">Dialog détail — état "goûtée", le bouton bascule vers l'action inverse.</p>
+</div>
+
+</body>
+</html>

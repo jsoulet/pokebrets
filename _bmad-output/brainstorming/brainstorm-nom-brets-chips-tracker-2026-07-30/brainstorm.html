@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brainstorm nom — Brets Chips Tracker</title>
+  <style>
+    :root {
+      --cream: #fff8eb;
+      --butter: #ffe9a8;
+      --mustard: #f0b429;
+      --orange: #f57c32;
+      --paprika: #d94d1a;
+      --red: #a93412;
+      --olive: #65733d;
+      --ink: #302316;
+      --soft: #7a6048;
+      --white: #fffdf8;
+      --shadow: 0 18px 45px rgba(94, 49, 10, 0.15);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: ui-rounded, "Avenir Next", "Trebuchet MS", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, #fff2c7 0, transparent 28%),
+        radial-gradient(circle at top right, #ffd6aa 0, transparent 24%),
+        linear-gradient(180deg, #fff8ef 0%, #ffe9cf 100%);
+      color: var(--ink);
+      line-height: 1.45;
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 32px));
+      margin: 24px auto 48px;
+    }
+
+    .hero, .section, .synthesis {
+      background: rgba(255, 253, 248, 0.88);
+      backdrop-filter: blur(6px);
+      border: 2px solid rgba(217, 77, 26, 0.08);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero {
+      padding: 28px 28px 24px;
+      background:
+        linear-gradient(135deg, rgba(255,241,197,0.96), rgba(255,253,248,0.94) 55%, rgba(255,216,167,0.96)),
+        var(--white);
+    }
+
+    .hero::after {
+      content: "🥔✨🍟";
+      position: absolute;
+      right: 24px;
+      top: 18px;
+      font-size: clamp(28px, 4vw, 54px);
+      transform: rotate(-8deg);
+      opacity: 0.92;
+    }
+
+    .eyebrow, .stamp {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+    }
+
+    .eyebrow {
+      background: #fff4c9;
+      color: var(--paprika);
+      border: 1px solid rgba(169,52,18,0.14);
+    }
+
+    h1, h2, h3 { margin: 0; line-height: 1.02; }
+
+    h1 {
+      margin-top: 14px;
+      font-size: clamp(2.5rem, 8vw, 5.5rem);
+      letter-spacing: -0.05em;
+      text-wrap: balance;
+    }
+
+    .hero p {
+      max-width: 760px;
+      margin: 16px 0 0;
+      font-size: 1.04rem;
+      color: var(--soft);
+    }
+
+    .chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .pill {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: var(--white);
+      border: 1.5px dashed rgba(217,77,26,0.28);
+      font-weight: 700;
+      box-shadow: 0 6px 18px rgba(240,180,41,0.18);
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .section { padding: 0; }
+    .section-head {
+      padding: 22px 24px 16px;
+      color: var(--white);
+    }
+
+    .section-body { padding: 20px 22px 24px; }
+
+    .section p {
+      margin: 0 0 18px;
+      color: var(--soft);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.9);
+      border-radius: 18px;
+      padding: 14px 14px 12px;
+      border: 1px solid rgba(48,35,22,0.08);
+      min-height: 88px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card strong {
+      display: block;
+      font-size: 1.02rem;
+      margin-bottom: 6px;
+    }
+
+    .card small {
+      color: var(--soft);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .blend .section-head {
+      background: linear-gradient(135deg, #f0572e, #f4b61e 78%);
+    }
+
+    .blend .card::after {
+      content: "DEX";
+      position: absolute;
+      right: 10px;
+      bottom: 8px;
+      font-size: 0.72rem;
+      font-weight: 900;
+      color: rgba(169,52,18,0.22);
+      letter-spacing: 0.08em;
+    }
+
+    .forced .section-head {
+      background: linear-gradient(135deg, #8a4a1b, #d88132 78%);
+    }
+
+    .forced .ticket-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 14px;
+    }
+
+    .ticket {
+      background:
+        radial-gradient(circle at left center, transparent 0 10px, rgba(255,255,255,0.97) 11px),
+        linear-gradient(90deg, rgba(240,180,41,0.18), rgba(255,255,255,0.98) 20%);
+      border: 1.5px dashed rgba(138,74,27,0.28);
+      border-radius: 20px;
+      padding: 16px 16px 14px 26px;
+      min-height: 90px;
+    }
+
+    .ticket strong { display: block; font-size: 1.05rem; }
+    .ticket span { color: var(--soft); font-size: 0.92rem; }
+
+    .metaphor .section-head {
+      background: linear-gradient(135deg, #65733d, #b88f1c 78%);
+    }
+
+    .binder {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+    }
+
+    .passport {
+      background: linear-gradient(180deg, #fffef8, #f8f3df);
+      border: 2px solid rgba(101,115,61,0.16);
+      border-radius: 20px;
+      padding: 14px;
+      position: relative;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.8);
+    }
+
+    .passport::before {
+      content: "";
+      position: absolute;
+      left: 10px;
+      top: 0;
+      bottom: 0;
+      width: 10px;
+      background: repeating-linear-gradient(180deg, rgba(101,115,61,0.16) 0 14px, transparent 14px 28px);
+      border-radius: 10px;
+    }
+
+    .passport strong, .sticker strong { display: block; margin-left: 16px; font-size: 1.03rem; }
+    .passport span, .sticker span { display: block; margin-left: 16px; color: var(--soft); font-size: 0.92rem; }
+
+    .trickster .section-head {
+      background: linear-gradient(135deg, #a93412, #f0572e 78%);
+    }
+
+    .sticker-wall {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 14px;
+      align-items: start;
+    }
+
+    .sticker {
+      border-radius: 24px;
+      padding: 16px 14px;
+      color: var(--ink);
+      border: 2px solid rgba(169,52,18,0.14);
+      background: linear-gradient(160deg, #fffdf7, #ffe0b5);
+      transform: rotate(calc(var(--rot) * 1deg));
+      box-shadow: 0 12px 24px rgba(169,52,18,0.12);
+    }
+
+    .sticker:nth-child(3n) { background: linear-gradient(160deg, #fff9d9, #ffd6ab); }
+    .sticker:nth-child(4n) { background: linear-gradient(160deg, #fff2e8, #ffe7a6); }
+
+    .synthesis {
+      margin-top: 22px;
+      padding: 24px;
+      background:
+        linear-gradient(145deg, rgba(255,242,206,0.98), rgba(255,253,248,0.95) 55%, rgba(255,219,180,0.98));
+    }
+
+    .synthesis h2 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      letter-spacing: -0.04em;
+      margin-top: 12px;
+    }
+
+    .family-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .family {
+      background: rgba(255,255,255,0.88);
+      border-radius: 22px;
+      padding: 18px;
+      border: 1.5px solid rgba(217,77,26,0.12);
+    }
+
+    .family h3 {
+      font-size: 1.15rem;
+      margin-bottom: 10px;
+    }
+
+    .family ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .family li + li { margin-top: 4px; }
+
+    .duo {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .origin {
+      border-radius: 22px;
+      padding: 18px;
+      background: linear-gradient(180deg, #fffdf7, #fff0c4);
+      border: 2px solid rgba(240,180,41,0.2);
+    }
+
+    .note {
+      margin-top: 18px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.76);
+      color: var(--soft);
+      font-weight: 600;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--soft);
+      font-size: 0.92rem;
+      margin-top: 18px;
+    }
+
+    @media (max-width: 700px) {
+      .page { width: min(100% - 18px, 1180px); margin-top: 10px; }
+      .hero, .section-body, .section-head, .synthesis { padding-left: 16px; padding-right: 16px; }
+      .hero::after { position: static; display: block; margin-top: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="eyebrow">collector de saveurs · session terminée</div>
+      <h1>Le grand classeur<br>des noms croustillants</h1>
+      <p>
+        Pour <strong>Brets Chips Tracker</strong> : un mini Pokédex de chips entre ami·es, sans compte,
+        sans backend, juste du local et du plaisir à cocher les saveurs goûtées. Ici, la séance de brainstorming
+        devient une carte souvenir à feuilleter comme un album de collection snacké. 🍟
+      </p>
+      <div class="chips-row">
+        <div class="pill">Idées de départ : <strong>Pokébrets</strong></div>
+        <div class="pill">Complice d'origine : <strong>Chipsopedia</strong></div>
+        <div class="pill">Ambiance : <strong>fun perso · franglais · collection</strong></div>
+      </div>
+    </section>
+
+    <div class="stack">
+      <section class="section blend">
+        <div class="section-head">
+          <div class="stamp">✨ Mélange de concepts</div>
+          <h2>Le rayon des portemanteaux</h2>
+        </div>
+        <div class="section-body">
+          <p>
+            Ici, les univers se télescopent : Pokédex, encyclopédie, sachet, snack et Brets fusionnent en noms qui sonnent vite,
+            bien, et immédiatement collectionnables.
+          </p>
+          <div class="grid">
+            <article class="card"><small>fusion dex</small><strong>Pokébrets</strong></article>
+            <article class="card"><small>fusion pedia</small><strong>Chipsopedia</strong></article>
+            <article class="card"><small>fusion dex</small><strong>Chipdex</strong></article>
+            <article class="card"><small>fusion dex</small><strong>Bretsdex</strong></article>
+            <article class="card"><small>fusion pedia</small><strong>Craquopedia</strong></article>
+            <article class="card"><small>biblio-snack</small><strong>Sachothèque</strong></article>
+            <article class="card"><small>fusion pedia</small><strong>Croustipedia</strong></article>
+            <article class="card"><small>clin d'œil pop</small><strong>Chipstagram</strong></article>
+            <article class="card"><small>fusion pedia</small><strong>Bretspedia</strong></article>
+            <article class="card"><small>fusion dex</small><strong>Snackdex</strong></article>
+            <article class="card"><small>fusion dex</small><strong>Craquodex</strong></article>
+            <article class="card"><small>biblio-sac</small><strong>Bagothèque</strong></article>
+            <article class="card"><small>saveurs</small><strong>Flavordex</strong></article>
+            <article class="card"><small>saveurs</small><strong>Saveurdex</strong></article>
+            <article class="card"><small>fusion dex</small><strong>Chipsdex</strong></article>
+            <article class="card"><small>fusion dex</small><strong>Croustidex</strong></article>
+            <article class="card"><small>écho poké</small><strong>Pokéchips</strong></article>
+            <article class="card"><small>mascotte</small><strong>Chipmon</strong></article>
+            <article class="card"><small>mascotte</small><strong>Bretsmon</strong></article>
+            <article class="card"><small>archive gourmande</small><strong>Grignothèque</strong></article>
+            <article class="card"><small>pseudo-savante</small><strong>Craquologue</strong></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section forced">
+        <div class="section-head">
+          <div class="stamp">🧭 Relations forcées</div>
+          <h2>Le carnet d'expédition des chips</h2>
+        </div>
+        <div class="section-body">
+          <p>
+            On mélange la chips avec des mondes voisins — atlas, safari, musée, trophées, cartographie — pour lui donner une
+            sensation d'aventure, d'inventaire et de territoire à explorer sachet après sachet.
+          </p>
+          <div class="ticket-grid">
+            <article class="ticket"><strong>ChipsAtlas</strong><span>La collection comme monde à parcourir.</span></article>
+            <article class="ticket"><strong>Chips Odyssey</strong><span>Version épopée, presque voyage initiatique.</span></article>
+            <article class="ticket"><strong>Flavor Safari</strong><span>Promesse de chasse aux goûts.</span></article>
+            <article class="ticket"><strong>Snack Passport</strong><span>Un passeport tamponné saveur par saveur.</span></article>
+            <article class="ticket"><strong>Craquo-Loto</strong><span>La joie du tirage et du checklist.</span></article>
+            <article class="ticket"><strong>Chip Constellation</strong><span>Les saveurs en étoiles à relier.</span></article>
+            <article class="ticket"><strong>Le Sachet d'Or</strong><span>Petit trophée croustillant.</span></article>
+            <article class="ticket"><strong>Chipwatch</strong><span>Veille obsessionnelle et fun de la dégustation.</span></article>
+            <article class="ticket"><strong>Cave à Chips</strong><span>Cachette gourmande, perso, collection.</span></article>
+            <article class="ticket"><strong>Chips Trophy Room</strong><span>La salle des prises dégustées.</span></article>
+            <article class="ticket"><strong>Bretsonomie</strong><span>Classement pseudo-scientifique des Brets.</span></article>
+            <article class="ticket"><strong>Chip Cartographe</strong><span>Le goût comme carte à compléter.</span></article>
+            <article class="ticket"><strong>Panthéon des Chips</strong><span>Version grandiloquente et drôle.</span></article>
+            <article class="ticket"><strong>Le Grand Inventaire</strong><span>Sobre, assumé, très checklist.</span></article>
+            <article class="ticket"><strong>Sachethèque</strong><span>Archive de sachets et de souvenirs.</span></article>
+            <article class="ticket"><strong>Chip Compass</strong><span>Boussole des prochaines saveurs.</span></article>
+            <article class="ticket"><strong>Cabinet de Curiosités Craquant</strong><span>Objet précieux, décalé, presque vintage.</span></article>
+            <article class="ticket"><strong>Le Musée du Croustillant</strong><span>Un musée perso pour goûts marquants.</span></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section metaphor">
+        <div class="section-head">
+          <div class="stamp">📓 Cartographie métaphorique</div>
+          <h2>Le rituel de collection</h2>
+        </div>
+        <div class="section-body">
+          <p>
+            Cette famille capture le vrai cœur du projet : non pas une base de données sérieuse, mais un petit objet affectif — album,
+            carnet, passeport, cave, atlas — qui rend la dégustation presque cérémonielle.
+          </p>
+          <div class="binder">
+            <article class="passport"><strong>Passeport Craquant</strong><span>Le nom qui transforme chaque chips en visa validé.</span></article>
+            <article class="passport"><strong>Passeport Bret's</strong><span>Direct, simple, très lisible pour l'usage perso.</span></article>
+            <article class="passport"><strong>Le Passeport du Chipsier</strong><span>Version plus personnage, plus conte.</span></article>
+            <article class="passport"><strong>Cave à Chips</strong><span>Revient ici comme métaphore forte du repaire.</span></article>
+            <article class="passport"><strong>Cellier Craquant</strong><span>Un cousin plus gourmand et légèrement old-school.</span></article>
+            <article class="passport"><strong>Dégust'Brets</strong><span>Compact, oral, carnet de dégustation.</span></article>
+            <article class="passport"><strong>Album Craquant</strong><span>Très proche de l'album Panini de saveurs.</span></article>
+            <article class="passport"><strong>Panini des Chips</strong><span>Collection assumée, régressive et joyeuse.</span></article>
+            <article class="passport"><strong>Sachet Panini</strong><span>Encore plus jeu de collection à ouvrir.</span></article>
+            <article class="passport"><strong>Carnet du Croustillant</strong><span>Poétique, perso, un peu cérémonial.</span></article>
+            <article class="passport"><strong>Badge à Croquer</strong><span>Chaque goût devient trophée.</span></article>
+            <article class="passport"><strong>Le Carnet Craquant</strong><span>Sobre, mignon, facile à adopter.</span></article>
+            <article class="passport"><strong>Chip Constellation Map</strong><span>Le ciel des saveurs à compléter.</span></article>
+            <article class="passport"><strong>Atlas des Saveurs</strong><span>Version plus élégante, presque gastronomique.</span></article>
+            <article class="passport"><strong>Constellation Bret's</strong><span>Les chips comme étoiles d'une collection perso.</span></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section trickster">
+        <div class="section-head">
+          <div class="stamp">🎭 Gambit du fripon</div>
+          <h2>Le mur des jeux de mots insolents</h2>
+        </div>
+        <div class="section-body">
+          <p>
+            Ici, le nom sourit avant même d'expliquer. C'est la famille des clins d'œil, du slogan qui se retient vite, du titre qui ferait
+            rire sur un écran partagé entre ami·es.
+          </p>
+          <div class="sticker-wall">
+            <article class="sticker" style="--rot:-2"><strong>Chips'Anonymes</strong><span>Le faux groupe de parole pour gens trop passionnés.</span></article>
+            <article class="sticker" style="--rot:3"><strong>Croustimaniaque</strong><span>Obsession snack, assumée et drôle.</span></article>
+            <article class="sticker" style="--rot:-4"><strong>Chipsholique</strong><span>Le mot-valise guilty pleasure.</span></article>
+            <article class="sticker" style="--rot:2"><strong>Bretstagram</strong><span>Comme si chaque goût méritait son post.</span></article>
+            <article class="sticker" style="--rot:-1"><strong>Chips ou Écoute</strong><span>Absurde, inattendu, mémorable.</span></article>
+            <article class="sticker" style="--rot:4"><strong>Toute la Sauce</strong><span>Promesse de tout goûter, tout noter.</span></article>
+            <article class="sticker" style="--rot:-3"><strong>Ça Croustille</strong><span>Le plus oral, le plus immédiat.</span></article>
+            <article class="sticker" style="--rot:3"><strong>Craqu'à Tout</strong><span>Mini slogan de gourmandise.</span></article>
+            <article class="sticker" style="--rot:-2"><strong>J'ai Croqué</strong><span>Le journal de dégustation en une phrase.</span></article>
+            <article class="sticker" style="--rot:2"><strong>Goûté-Validé</strong><span>Le geste checklist résumé en duo.</span></article>
+            <article class="sticker" style="--rot:-4"><strong>Le Croustimètre</strong><span>Comme si l'app mesurait la passion.</span></article>
+            <article class="sticker" style="--rot:2"><strong>CroustiCheck</strong><span>Très app, très action.</span></article>
+            <article class="sticker" style="--rot:-1"><strong>Chips Complet(e)</strong><span>La collection totale comme objectif secret.</span></article>
+            <article class="sticker" style="--rot:3"><strong>Bret's ou Rien</strong><span>Le serment du collectionneur fidèle.</span></article>
+            <article class="sticker" style="--rot:-3"><strong>Sacréchips</strong><span>Compact, drôle, presque signature.</span></article>
+            <article class="sticker" style="--rot:4"><strong>Chips Fait Sa Loi</strong><span>Final grandiloquent, parfaitement cheeky.</span></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section trickster">
+        <div class="section-head">
+          <div class="stamp">🔊 Onomatopée Riff (bonus)</div>
+          <h2>Le bruit qui devient un nom</h2>
+        </div>
+        <div class="section-body">
+          <p>
+            Piste déclenchée par une question toute simple : c'est quoi le bruit d'une chips croquée ? <strong>CRUNCH</strong>,
+            <strong>CRAC</strong>, <strong>CROC</strong> — le son même de la dégustation devient matière à nom.
+          </p>
+          <div class="sticker-wall">
+            <article class="sticker" style="--rot:-3"><strong>Crounch</strong><span>Le mot-son, direct et gourmand.</span></article>
+            <article class="sticker" style="--rot:2"><strong>Crounchodex</strong><span>Le pendant sonore de Pokébrets/Chipdex.</span></article>
+            <article class="sticker" style="--rot:-2"><strong>Crounchopedia</strong><span>Rejoint la famille encyclopédie avec le bruit en plus.</span></article>
+            <article class="sticker" style="--rot:3"><strong>Crounchothèque</strong><span>La bibliothèque des croquants.</span></article>
+            <article class="sticker" style="--rot:-4"><strong>Crounch & Check</strong><span>Le geste checklist mis en duo avec le son.</span></article>
+            <article class="sticker" style="--rot:4"><strong>Ça Crounche</strong><span>Cousin oral de « Ça Croustille ».</span></article>
+            <article class="sticker" style="--rot:-1"><strong>CracBrets</strong><span>Le son collé directement à la marque.</span></article>
+            <article class="sticker" style="--rot:2"><strong>CroqBrets</strong><span>Variante plus douce, plus « croc » que « crac ».</span></article>
+            <article class="sticker" style="--rot:-3"><strong>Croq'Dex</strong><span>Pokédex du croquant, très mot-valise.</span></article>
+            <article class="sticker" style="--rot:1"><strong>Le Crounch du Jour</strong><span>Format rituel quotidien, presque calendrier.</span></article>
+            <article class="sticker" style="--rot:-2"><strong>Crounchomètre</strong><span>Mesure fictive de la passion, façon jauge.</span></article>
+            <article class="sticker" style="--rot:3"><strong>CrounchMap</strong><span>La carte des saveurs conquises, version sonore.</span></article>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="synthesis">
+      <div class="eyebrow">synthèse finale · 4 familles</div>
+      <h2>Ce qui émerge vraiment</h2>
+      <div class="family-grid">
+        <article class="family">
+          <h3>1. Les portemanteaux façon Pokédex</h3>
+          <ul>
+            <li><strong>Chipdex</strong></li>
+            <li><strong>Pokébrets</strong></li>
+            <li><strong>Chipmon</strong></li>
+            <li><strong>Craquodex</strong></li>
+          </ul>
+          <p>La voie la plus directe, la plus lisible et la plus proche du fantasme « mini Pokédex de chips ».</p>
+        </article>
+        <article class="family">
+          <h3>2. Les métaphores de collection / rituel</h3>
+          <ul>
+            <li><strong>Passeport Craquant</strong></li>
+            <li><strong>Cave à Chips</strong></li>
+            <li><strong>Album Craquant</strong></li>
+            <li><strong>Carnet du Croustillant</strong></li>
+          </ul>
+          <p>Ce sont les noms qui racontent le mieux l'objet émotionnel : un petit carnet perso à compléter.</p>
+        </article>
+        <article class="family">
+          <h3>3. Les jeux de mots cheeky</h3>
+          <ul>
+            <li><strong>Ça Croustille</strong></li>
+            <li><strong>Sacréchips</strong></li>
+            <li><strong>Chips ou Rien</strong></li>
+          </ul>
+          <p>Les plus drôles à l'oral ; parfaits comme baseline, slogan ou nom très assumé entre ami·es.</p>
+        </article>
+        <article class="family">
+          <h3>4. Le registre encyclopédie</h3>
+          <ul>
+            <li><strong>Chipsopedia</strong></li>
+            <li><strong>Croustipedia</strong></li>
+            <li><strong>Bretspedia</strong></li>
+          </ul>
+          <p>Plus complet, plus exhaustif, un peu plus sérieux — moins coquin mais très clair.</p>
+        </article>
+      </div>
+
+      <div class="duo">
+        <article class="origin">
+          <h3>Comment cela rejoint <em>Pokébrets</em></h3>
+          <p>
+            <strong>Pokébrets</strong> relie déjà deux choses fortes : l'imaginaire Pokédex/collection et le jeu de mot très local avec Brets.
+            Il fait donc le pont idéal entre la famille <em>dex</em> et la famille la plus malicieuse.
+          </p>
+        </article>
+        <article class="origin">
+          <h3>Comment cela rejoint <em>Chipsopedia</em></h3>
+          <p>
+            <strong>Chipsopedia</strong> plante tout de suite le décor encyclopédique. Il ouvre naturellement la branche
+            <em>Croustipedia</em> / <em>Bretspedia</em>, plus catalogue complet que carnet affectif.
+          </p>
+        </article>
+      </div>
+
+      <div class="note">
+        Si l'on cherche un nom principal ultra-cohérent avec le concept, <strong>Pokébrets</strong>, <strong>Chipdex</strong> et <strong>Passeport Craquant</strong>
+        forment un joli trio final : l'un est iconique, l'autre limpide, le dernier tendre et collectionneur.
+      </div>
+    </section>
+
+    <footer>
+      Carte souvenir de brainstorming · Brets Chips Tracker · 30 juillet 2026
+    </footer>
+  </main>
+</body>
+</html>

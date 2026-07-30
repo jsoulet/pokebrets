@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Crounch — Catalogue (mock)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- display: vraie police brets.fr (Post No Bills Jaffna ExtraBold), self-hostee par brets.fr donc absente de Google Fonts -> servie ici via CDNFonts pour la preview. Inter via Google Fonts. -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.cdnfonts.com/css/post-no-bills-jaffna" rel="stylesheet">
+<style>
+/*
+  Mock illustrates:
+  - DESIGN.md: Colors (primary moutarde #DDA138, accent rouge-chips #E8482C, background crème #FDF0DD),
+    Shapes (rounded/lg, section-divider zigzag), Components (chip-tile, chip-tile-tasted, chip-tile-archived, badge-archived)
+  - EXPERIENCE.md: Information Architecture (Catalogue surface), Component Patterns (Chip-tile, progress counter, Skeleton),
+    State Patterns (Hors ligne avec cache, Saveur archivée), Responsive & Platform (mobile vs desktop)
+  System fonts used as stand-in for Baloo 2 (DESIGN.md typography.display) — no network fetch in this offline mock.
+  Header band + zigzag transition inspired by brets.fr (imports/brets-fr-01, brets-fr-04) — palette/shape only, not the page layout.
+*/
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #EDEAE0;
+  padding: 40px;
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.caption { font-size: 12px; color: #6B6456; margin: 8px 0 0; text-align: center; }
+.frame-col { display: flex; flex-direction: column; align-items: center; }
+
+/* Phone frame */
+.phone {
+  width: 360px;
+  height: 720px;
+  background: #FDF0DD;
+  border-radius: 36px;
+  border: 10px solid #1a1a1a;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+}
+.desktop {
+  width: 900px;
+  height: 560px;
+  background: #FDF0DD;
+  border-radius: 12px;
+  border: 1px solid #C9C2B4;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+.desktop .browser-bar {
+  height: 32px;
+  background: #EDEAE0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  flex-shrink: 0;
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+
+.header {
+  padding: 20px 20px 22px;
+  flex-shrink: 0;
+  background: #DDA138; /* moutarde-brets, cf. DESIGN.md colors.primary */
+}
+.title {
+  font-family: 'Post No Bills Jaffna ExtraBold', Georgia, serif; /* vraie police display brets.fr */
+  font-weight: 800;
+  font-size: 22px;
+  color: #FFFDF7;
+  -webkit-text-stroke: 1px #241A08;
+  margin: 0 0 6px;
+}
+.progress {
+  font-size: 14px;
+  color: #241A08;
+  font-weight: 600;
+}
+.progress-bar {
+  height: 8px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.5);
+  margin-top: 6px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: #3FA34D;
+  border-radius: 9999px;
+}
+/* Section divider — zigzag torn-bag edge, cf. DESIGN.md components.section-divider */
+.zigzag {
+  height: 14px;
+  flex-shrink: 0;
+  background: #DDA138;
+  clip-path: polygon(
+    0% 0%, 4% 100%, 8% 0%, 12% 100%, 16% 0%, 20% 100%, 24% 0%, 28% 100%,
+    32% 0%, 36% 100%, 40% 0%, 44% 100%, 48% 0%, 52% 100%, 56% 0%, 60% 100%,
+    64% 0%, 68% 100%, 72% 0%, 76% 100%, 80% 0%, 84% 100%, 88% 0%, 92% 100%,
+    96% 0%, 100% 100%, 100% 0%
+  );
+}
+.banner {
+  margin: 12px 20px 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #FBEFD9;
+  color: #6B4A00;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.grid {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 16px 24px;
+  background: #FDF0DD; /* background crème, cf. DESIGN.md colors.background */
+  display: grid;
+  gap: 12px;
+}
+.phone .grid { grid-template-columns: repeat(3, 1fr); }
+.desktop .grid { grid-template-columns: repeat(6, 1fr); padding: 8px 24px 24px; }
+
+.tile {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 16px;
+  background: #FFFDF7;
+  border: 1px solid #F0DCB0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  text-align: center;
+}
+.tasted-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #3FA34D;
+  color: #FFFDF7;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tile.archived { background: #C9C2B4; border-color: #C9C2B4; }
+.tile.archived .flavor-name { color: #6B6456; }
+.tile .bag {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #E8482C;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+.tile.archived .bag { background: #6B6456; }
+.flavor-name { font-size: 10px; font-weight: 600; color: #3A2100; line-height: 1.2; }
+.info-icon {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.7);
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6B6456;
+}
+.archived-badge {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #6B6456;
+  color: #FFFDF7;
+  font-size: 8px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 9999px;
+}
+
+/* Skeleton */
+.skel-tile {
+  aspect-ratio: 1;
+  border-radius: 16px;
+  background: linear-gradient(90deg, #F0DCB0 25%, #F8ECD2 37%, #F0DCB0 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+</style>
+</head>
+<body>
+
+<div class="frame-col">
+  <div class="phone">
+    <div class="header">
+      <p class="title">🥔 Crounch</p>
+      <p class="progress">13/48 saveurs goûtées</p>
+      <div class="progress-bar"><div class="progress-fill" style="width:27%"></div></div>
+    </div>
+    <div class="zigzag"></div>
+    <div class="grid">
+      <div class="tile tasted"><div class="bag">🍟</div><div class="flavor-name">Barbecue Fumé</div><div class="tasted-badge">✓</div><div class="info-icon">i</div></div>
+      <div class="tile"><div class="bag">🍟</div><div class="flavor-name">Crème &amp; Ciboulette</div><div class="info-icon">i</div></div>
+      <div class="tile tasted"><div class="bag">🍟</div><div class="flavor-name">Nature</div><div class="tasted-badge">✓</div><div class="info-icon">i</div></div>
+      <div class="tile archived"><div class="bag">🍟</div><div class="flavor-name">Galette-Saucisse</div><div class="info-icon">i</div><div class="archived-badge">archivée</div></div>
+      <div class="tile"><div class="bag">🍟</div><div class="flavor-name">Fromage Alsacien</div><div class="info-icon">i</div></div>
+      <div class="tile tasted"><div class="bag">🍟</div><div class="flavor-name">Paprika</div><div class="tasted-badge">✓</div><div class="info-icon">i</div></div>
+      <div class="tile"><div class="bag">🍟</div><div class="flavor-name">Crêpe au Sucre</div><div class="info-icon">i</div></div>
+      <div class="tile"><div class="bag">🍟</div><div class="flavor-name">Curry Doux</div><div class="info-icon">i</div></div>
+      <div class="tile"><div class="bag">🍟</div><div class="flavor-name">Ketchup</div><div class="info-icon">i</div></div>
+    </div>
+  </div>
+  <p class="caption">Catalogue — mobile, état "à jour". Header moutarde + zigzag façon sachet ouvert, badge coche vert en coin = goûtée, tuile beige = archivée (badge texte visible en permanence).</p>
+</div>
+
+<div class="frame-col">
+  <div class="phone">
+    <div class="header">
+      <p class="title">🥔 Crounch</p>
+    </div>
+    <div class="zigzag"></div>
+    <div class="banner">📡 Hors ligne — dernière version connue affichée</div>
+    <div class="grid">
+      <div class="tile tasted"><div class="bag">🍟</div><div class="flavor-name">Barbecue Fumé</div><div class="tasted-badge">✓</div><div class="info-icon">i</div></div>
+      <div class="tile"><div class="bag">🍟</div><div class="flavor-name">Crème &amp; Ciboulette</div><div class="info-icon">i</div></div>
+      <div class="tile tasted"><div class="bag">🍟</div><div class="flavor-name">Nature</div><div class="tasted-badge">✓</div><div class="info-icon">i</div></div>
+      <div class="skel-tile"></div>
+      <div class="skel-tile"></div>
+      <div class="skel-tile"></div>
+    </div>
+  </div>
+  <p class="caption">Catalogue — état "hors ligne avec cache" (bannière) mixé à un état de chargement partiel (Skeleton).</p>
+</div>
+
+<div class="frame-col">
+  <div class="desktop">
+    <div class="browser-bar">
+      <div class="dot" style="background:#DDA138"></div>
+      <div class="dot" style="background:#E8482C"></div>
+      <div class="dot" style="background:#3FA34D"></div>
+    </div>
+    <div class="header">
+      <p class="title">🥔 Crounch</p>
+      <p class="progress">13/48 saveurs goûtées</p>
+      <div class="progress-bar"><div class="progress-fill" style="width:27%"></div></div>
+    </div>
+    <div class="zigzag"></div>
+    <div class="grid">
+      <div class="tile tasted"><div class="bag">🍟</div><div class="flavor-name">Barbecue Fumé</div><div class="tasted-badge">✓</div><div class="info-icon">i</div></div>
+      <div class="tile"><div class="bag">🍟</div><div class="flavor-name">Crème &amp; Ciboulette</div><div class="info-icon">i</div></div>
+      <div class="tile tasted"><div class="bag">🍟</div><div class="flavor-name">Nature</div><div class="tasted-badge">✓</div><div class="info-icon">i</div></div>
+      <div class="tile archived"><div class="bag">🍟</div><div class="flavor-name">Galette-Saucisse</div><div class="info-icon">i</div><div class="archived-badge">archivée</div></div>
+      <div class="tile"><div class="bag">🍟</div><div class="flavor-name">Fromage Alsacien</div><div class="info-icon">i</div></div>
+      <div class="tile tasted"><div class="bag">🍟</div><div class="flavor-name">Paprika</div><div class="tasted-badge">✓</div><div class="info-icon">i</div></div>
+      <div class="tile"><div class="bag">🍟</div><div class="flavor-name">Crêpe au Sucre</div><div class="info-icon">i</div></div>
+      <div class="tile"><div class="bag">🍟</div><div class="flavor-name">Curry Doux</div><div class="info-icon">i</div></div>
+      <div class="tile"><div class="bag">🍟</div><div class="flavor-name">Ketchup</div><div class="info-icon">i</div></div>
+      <div class="tile"><div class="bag">🍟</div><div class="flavor-name">Poivre</div><div class="info-icon">i</div></div>
+      <div class="tile"><div class="bag">🍟</div><div class="flavor-name">Moutarde</div><div class="info-icon">i</div></div>
+      <div class="tile tasted"><div class="bag">🍟</div><div class="flavor-name">Sel de mer</div><div class="tasted-badge">✓</div><div class="info-icon">i</div></div>
+    </div>
+  </div>
+  <p class="caption">Catalogue — desktop (grille 6 colonnes, cf. Responsive &amp; Platform). Header moutarde + zigzag repris à chaque taille d'écran.</p>
+</div>
+
+</body>
+</html>
