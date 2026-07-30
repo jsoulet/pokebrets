@@ -12,7 +12,7 @@ baseline_commit: 6c4e501
 
 # Story 1.2: Schéma partagé du Catalogue et de l'État de dégustation
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -33,28 +33,28 @@ so that l'app et l'outil de scraping ne puissent jamais diverger silencieusement
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Choisir et installer la librairie de validation runtime (AC: #1, #2)
-  - [ ] Subtask 1.1: Installer `zod` (v4, `npm install zod@latest`) — choix standard TypeScript-first pour la validation runtime + inférence de types, cohérent avec AD-4 (aucune dépendance serveur, fonctionne en Client Component et en script Node CLI)
-  - [ ] Subtask 1.2: Vérifier que `zod` n'introduit aucune dépendance incompatible avec `output: 'export'` (pas d'API Node-only utilisée côté app)
-- [ ] Task 2: Définir le schéma Saveur (Flavor) (AC: #1, #2, #3)
-  - [ ] Subtask 2.1: Créer `lib/schema/flavor.ts` avec un schéma Zod `flavorSchema` : `id` (string, regex kebab-case `^[a-z0-9]+(-[a-z0-9]+)*$`), `name` (string non vide), `image` (string, URL ou chemin non vide), `status` (enum `"active" | "archived"`)
-  - [ ] Subtask 2.2: Exporter le type TypeScript inféré `Flavor` via `z.infer<typeof flavorSchema>` — ne jamais dupliquer la définition du type à la main
-  - [ ] Subtask 2.3: Ne fournir aucune fonction de génération de slug depuis `name` dans ce module (AD-1) — seulement la validation du format ; documenter ce choix dans un commentaire
-- [ ] Task 3: Définir le schéma Catalogue (AC: #1, #2, #4)
-  - [ ] Subtask 3.1: Créer `lib/schema/catalogue.ts` avec un schéma Zod `catalogueSchema` : `generatedAt` (string ISO 8601 datetime), `flavors` (array de `flavorSchema`)
-  - [ ] Subtask 3.2: Exporter le type `Catalogue` inféré
-  - [ ] Subtask 3.3: Ajouter un test unitaire vérifiant qu'un Catalogue avec deux `flavors` valides + `generatedAt` ISO valide passe la validation
-- [ ] Task 4: Définir le schéma État de dégustation (Tasted State) (AC: #1, #2, #5)
-  - [ ] Subtask 4.1: Créer `lib/schema/tasted.ts` avec un schéma Zod `tastedStateSchema` : `z.record(z.string(), z.boolean())` — map id de Saveur → booléen, jamais un tableau (AD-7)
-  - [ ] Subtask 4.2: Exporter le type `TastedState` inféré
-- [ ] Task 5: Exposer une API de validation exploitable (pas de plantage silencieux) (AC: #1, #2)
-  - [ ] Subtask 5.1: Créer `lib/schema/index.ts` (remplace le stub de la story 1.1) qui ré-exporte les schémas/types des 3 modules et expose des fonctions `parseFlavor`, `parseCatalogue`, `parseTastedState` basées sur `schema.safeParse(...)` — jamais `schema.parse(...)` qui lève une exception non gérée
-  - [ ] Subtask 5.2: Chaque fonction `parseX` retourne une union discriminée exploitable par l'appelant : `{ success: true; data: X } | { success: false; error: string[] }` (le tableau `error` contient les messages Zod formatés, pas l'objet `ZodError` brut) — cf. AD-3 qui consommera ce résultat en story 1.3 pour distinguer succès/échec sans exception
-- [ ] Task 6: Tests unitaires exhaustifs (AC: #1, #2, #3, #5)
-  - [ ] Subtask 6.1: Cas valides : Saveur conforme, Catalogue conforme (plusieurs saveurs, `active` et `archived`), État de dégustation conforme (map vide, map avec plusieurs entrées)
-  - [ ] Subtask 6.2: Cas invalides : champ manquant sur une Saveur, `status` hors énum, `id` qui ne respecte pas le format kebab-case (majuscules, espaces, underscore), `generatedAt` non-ISO, `flavors` non-array, État de dégustation avec une valeur non-booléenne — vérifier que `success: false` est retourné avec un message exploitable (jamais une exception qui remonte)
-  - [ ] Subtask 6.3: Exécuter `npm test` : tous les tests passent, aucune régression sur le smoke test existant (`app/page.test.tsx`)
-  - [ ] Subtask 6.4: Exécuter `npm run build && npm run lint` : aucune erreur (aucune route `app/api/` ni Server Action introduite — le module reste pur, sans `'use client'` nécessaire puisqu'il ne touche ni `localStorage` ni `window`, AD-4)
+- [x] Task 1: Choisir et installer la librairie de validation runtime (AC: #1, #2)
+  - [x] Subtask 1.1: Installer `zod` (v4, `npm install zod@latest`) — choix standard TypeScript-first pour la validation runtime + inférence de types, cohérent avec AD-4 (aucune dépendance serveur, fonctionne en Client Component et en script Node CLI)
+  - [x] Subtask 1.2: Vérifier que `zod` n'introduit aucune dépendance incompatible avec `output: 'export'` (pas d'API Node-only utilisée côté app)
+- [x] Task 2: Définir le schéma Saveur (Flavor) (AC: #1, #2, #3)
+  - [x] Subtask 2.1: Créer `lib/schema/flavor.ts` avec un schéma Zod `flavorSchema` : `id` (string, regex kebab-case `^[a-z0-9]+(-[a-z0-9]+)*$`), `name` (string non vide), `image` (string, URL ou chemin non vide), `status` (enum `"active" | "archived"`)
+  - [x] Subtask 2.2: Exporter le type TypeScript inféré `Flavor` via `z.infer<typeof flavorSchema>` — ne jamais dupliquer la définition du type à la main
+  - [x] Subtask 2.3: Ne fournir aucune fonction de génération de slug depuis `name` dans ce module (AD-1) — seulement la validation du format ; documenter ce choix dans un commentaire
+- [x] Task 3: Définir le schéma Catalogue (AC: #1, #2, #4)
+  - [x] Subtask 3.1: Créer `lib/schema/catalogue.ts` avec un schéma Zod `catalogueSchema` : `generatedAt` (string ISO 8601 datetime), `flavors` (array de `flavorSchema`)
+  - [x] Subtask 3.2: Exporter le type `Catalogue` inféré
+  - [x] Subtask 3.3: Ajouter un test unitaire vérifiant qu'un Catalogue avec deux `flavors` valides + `generatedAt` ISO valide passe la validation
+- [x] Task 4: Définir le schéma État de dégustation (Tasted State) (AC: #1, #2, #5)
+  - [x] Subtask 4.1: Créer `lib/schema/tasted.ts` avec un schéma Zod `tastedStateSchema` : `z.record(z.string(), z.boolean())` — map id de Saveur → booléen, jamais un tableau (AD-7)
+  - [x] Subtask 4.2: Exporter le type `TastedState` inféré
+- [x] Task 5: Exposer une API de validation exploitable (pas de plantage silencieux) (AC: #1, #2)
+  - [x] Subtask 5.1: Créer `lib/schema/index.ts` (remplace le stub de la story 1.1) qui ré-exporte les schémas/types des 3 modules et expose des fonctions `parseFlavor`, `parseCatalogue`, `parseTastedState` basées sur `schema.safeParse(...)` — jamais `schema.parse(...)` qui lève une exception non gérée
+  - [x] Subtask 5.2: Chaque fonction `parseX` retourne une union discriminée exploitable par l'appelant : `{ success: true; data: X } | { success: false; error: string[] }` (le tableau `error` contient les messages Zod formatés, pas l'objet `ZodError` brut) — cf. AD-3 qui consommera ce résultat en story 1.3 pour distinguer succès/échec sans exception
+- [x] Task 6: Tests unitaires exhaustifs (AC: #1, #2, #3, #5)
+  - [x] Subtask 6.1: Cas valides : Saveur conforme, Catalogue conforme (plusieurs saveurs, `active` et `archived`), État de dégustation conforme (map vide, map avec plusieurs entrées)
+  - [x] Subtask 6.2: Cas invalides : champ manquant sur une Saveur, `status` hors énum, `id` qui ne respecte pas le format kebab-case (majuscules, espaces, underscore), `generatedAt` non-ISO, `flavors` non-array, État de dégustation avec une valeur non-booléenne — vérifier que `success: false` est retourné avec un message exploitable (jamais une exception qui remonte)
+  - [x] Subtask 6.3: Exécuter `npm test` : tous les tests passent, aucune régression sur le smoke test existant (`app/page.test.tsx`)
+  - [x] Subtask 6.4: Exécuter `npm run build && npm run lint` : aucune erreur (aucune route `app/api/` ni Server Action introduite — le module reste pur, sans `'use client'` nécessaire puisqu'il ne touche ni `localStorage` ni `window`, AD-4)
 
 ## Dev Notes
 
@@ -103,10 +103,42 @@ so that l'app et l'outil de scraping ne puissent jamais diverger silencieusement
 
 ### Agent Model Used
 
+Claude Sonnet 5 (GitHub Copilot CLI)
+
 ### Debug Log References
+
+- `npx vitest run lib/schema/flavor.test.ts` → red (module inexistant) puis green (8/8) après implémentation de `flavor.ts`
+- `npx vitest run lib/schema/catalogue.test.ts` → red puis green (6/6) après implémentation de `catalogue.ts`
+- `npx vitest run lib/schema/tasted.test.ts` → red puis green (5/5) après implémentation de `tasted.ts`
+- `npx vitest run lib/schema/index.test.ts` → red puis green (6/6) après implémentation de `index.ts`
+- `npm test` (suite complète) → 26/26 tests passent (25 nouveaux + smoke test existant `app/page.test.tsx`)
+- `npm run build` → succès, export statique généré sans erreur
+- `npm run lint` → aucune erreur
 
 ### Completion Notes List
 
+- Librairie choisie : Zod v4.4.3 (`z.iso.datetime()` pour la validation ISO 8601 côté `generatedAt`, API v4).
+- `lib/schema/flavor.ts` : `flavorSchema` avec `id` validé par regex kebab-case, `status` en enum `active`/`archived`. Aucune fonction de génération de slug fournie (AD-1) — commentaire explicite dans le code.
+- `lib/schema/catalogue.ts` : `catalogueSchema` avec `generatedAt` (ISO datetime) + `flavors` (array de `flavorSchema`).
+- `lib/schema/tasted.ts` : `tastedStateSchema` = `z.record(z.string(), z.boolean())` — map, jamais un tableau (AD-7 respecté).
+- `lib/schema/index.ts` : remplace le stub de la story 1.1. Ré-exporte les 3 schémas/types et expose `parseFlavor`/`parseCatalogue`/`parseTastedState`, toutes basées sur `safeParse` — retournent `{ success, data | error }`, jamais d'exception (AD-3 respecté : la même distinction succès/échec pourra être réutilisée par `lib/catalogue/` en story 1.3).
+- 25 tests unitaires ajoutés (8 flavor + 6 catalogue + 5 tasted + 6 index/parseX), couvrant tous les cas valides et invalides listés en Task 6. Suite complète : 26/26 tests passent (aucune régression sur le smoke test de la story 1.1).
+- Vérifié : aucun `app/api/`, aucune directive `'use client'`/`'use server'` nécessaire dans `lib/schema/` (module pur, AD-4 respecté).
+- `npm audit` signale 12 vulnérabilités "high" pré-existantes (transitives via `eslint-config-next`/`postcss`, non liées à `zod` ni à cette story) — hors scope, non traité.
+
 ### File List
 
+- `lib/schema/flavor.ts` (créé)
+- `lib/schema/flavor.test.ts` (créé)
+- `lib/schema/catalogue.ts` (créé)
+- `lib/schema/catalogue.test.ts` (créé)
+- `lib/schema/tasted.ts` (créé)
+- `lib/schema/tasted.test.ts` (créé)
+- `lib/schema/index.ts` (remplacé — stub de la story 1.1 supprimé)
+- `lib/schema/index.test.ts` (créé)
+- `package.json` (modifié — ajout de la dépendance `zod`)
+- `package-lock.json` (modifié — lockfile mis à jour)
+
 ## Change Log
+
+- 2026-07-30 : Implémentation complète de la story 1.2 — schéma partagé Zod (Flavor, Catalogue, État de dégustation) + API `parseX` exploitable. 25 tests unitaires ajoutés, 26/26 passent, build/lint OK. Status → review.
