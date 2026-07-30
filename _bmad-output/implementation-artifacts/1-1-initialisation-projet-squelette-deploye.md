@@ -11,7 +11,7 @@ baseline_commit: NO_VCS
 
 # Story 1.1: Initialisation du projet et squelette déployé
 
-Status: in-progress
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -45,10 +45,10 @@ so that j'ai un squelette d'app vide mais réellement déployé sur Netlify, vis
 - [x] Task 4: Page d'accueil minimale (AC: #1, #2)
   - [x] Subtask 4.1: Remplacer le contenu par défaut de `app/page.tsx` par une page minimale affichant au moins le nom "Crounch" (pas de logique métier — le Catalogue arrive en story 1.3/1.4)
   - [x] Subtask 4.2: Adapter `app/layout.tsx` (titre `<title>` = "Crounch", `lang="fr"`)
-- [ ] Task 5: Déployer sur Netlify (AC: #2)
-  - [ ] Subtask 5.1: Créer/connecter un site Netlify au repo ; configurer la commande de build (`npm run build`) et le dossier de publication (`out/`)
-  - [ ] Subtask 5.2: Déclencher un déploiement et vérifier que l'URL Netlify publique affiche la page d'accueil minimale
-  - [ ] Subtask 5.3: Documenter l'URL Netlify obtenue dans le README ou dans Completion Notes (pas de secret/credential à committer)
+- [x] Task 5: Déployer sur Netlify (AC: #2)
+  - [x] Subtask 5.1: Créer/connecter un site Netlify au repo ; configurer la commande de build (`npm run build`) et le dossier de publication (`out/`)
+  - [x] Subtask 5.2: Déclencher un déploiement et vérifier que l'URL Netlify publique affiche la page d'accueil minimale
+  - [x] Subtask 5.3: Documenter l'URL Netlify obtenue dans le README ou dans Completion Notes (pas de secret/credential à committer)
 - [x] Task 6: Tests et validations (AC: #1, #2, #3)
   - [x] Subtask 6.1: Ajouter un test (smoke test) qui vérifie que `app/page.tsx` rend sans erreur (ex: Vitest + React Testing Library, ou le framework de test que le projet choisit à l'initialisation — documenter le choix dans Dev Agent Record)
   - [x] Subtask 6.2: Ajouter un script CI minimal ou une commande documentée qui exécute `npm run build && npm test` pour valider le pipeline avant tout déploiement futur
@@ -125,7 +125,7 @@ Claude Sonnet 5 (GitHub Copilot CLI)
 - Tests : Vitest + React Testing Library choisis (compatibles Next.js 16/App Router, rapides). Smoke test unique sur `app/page.tsx`. Script `npm test` (`vitest run`) et `npm run verify` (`build && test`) ajoutés.
 - CI minimale ajoutée : `.github/workflows/ci.yml` (checkout, setup-node 22, `npm ci`, `npm run build`, `npm test`).
 - Repo git initialisé localement (`git init` + commit initial) — le repo n'était pas encore sous contrôle de version.
-- **Task 5 (déploiement Netlify) volontairement laissée non cochée** : `netlify.toml` créé (`command = "npm run build"`, `publish = "out"`), prêt à l'emploi — mais la connexion effective (push vers GitHub + import du site sur Netlify) requiert un compte/authentification utilisateur que l'agent ne peut pas réaliser à sa place. Sur décision explicite de l'utilisateur, cette étape est différée : il connectera lui-même le repo à Netlify une fois poussé sur GitHub. **AC #2 n'est donc pas encore vérifiable** tant que cette étape manuelle n'est pas faite.
+- **Task 5 (déploiement Netlify) réalisée** : repo poussé sur `github.com/jsoulet/pokebrets` (branche `main`), site Netlify connecté par l'utilisateur, déployé à **https://crounch.johansoulet.fr/**. Vérifié via fetch HTTP : la page publique affiche bien le titre "Crounch" et le texte "Le Catalogue des saveurs Brets arrive bientôt." — AC #2 confirmée.
 
 ### File List
 
@@ -146,10 +146,11 @@ Claude Sonnet 5 (GitHub Copilot CLI)
 - `scripts/.gitkeep` (créé — dossier réservé à l'outil de scraping, story 1.9)
 - `vitest.config.ts` (créé)
 - `vitest.setup.ts` (créé)
-- `netlify.toml` (créé — build/publish config, connexion effective en attente)
+- `netlify.toml` (créé — build/publish config, site déployé sur https://crounch.johansoulet.fr/)
 - `.github/workflows/ci.yml` (créé — build + test en CI)
 - `.gitignore`, `tsconfig.json`, `eslint.config.mjs`, `postcss.config.mjs`, `README.md`, `AGENTS.md`, `CLAUDE.md`, `public/*` (générés par `create-next-app`, non modifiés au-delà du défaut)
 
 ## Change Log
 
 - 2026-07-30 : Implémentation initiale de la story 1.1 — scaffold Next.js 16 + shadcn/ui + structure du spine + tests, à l'exception de la connexion Netlify effective (bloquée sur action utilisateur).
+- 2026-07-30 : Repo poussé sur GitHub (`jsoulet/pokebrets`), site Netlify connecté et déployé par l'utilisateur (https://crounch.johansoulet.fr/), déploiement vérifié. Toutes les tâches complètes.
