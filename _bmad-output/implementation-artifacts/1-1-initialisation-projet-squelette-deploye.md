@@ -11,7 +11,7 @@ baseline_commit: NO_VCS
 
 # Story 1.1: Initialisation du projet et squelette déployé
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -53,6 +53,15 @@ so that j'ai un squelette d'app vide mais réellement déployé sur Netlify, vis
   - [x] Subtask 6.1: Ajouter un test (smoke test) qui vérifie que `app/page.tsx` rend sans erreur (ex: Vitest + React Testing Library, ou le framework de test que le projet choisit à l'initialisation — documenter le choix dans Dev Agent Record)
   - [x] Subtask 6.2: Ajouter un script CI minimal ou une commande documentée qui exécute `npm run build && npm test` pour valider le pipeline avant tout déploiement futur
   - [x] Subtask 6.3: Confirmer manuellement (ou via test statique) qu'aucun fichier sous `app/api/` n'existe et qu'aucun import serveur n'est présent
+
+### Review Findings
+
+- [x] [Review][Patch] `package.json` `start` script (`next start`) est incompatible avec `output: 'export'` — ne servira jamais le dossier `out/` [package.json:8]
+- [x] [Review][Patch] `app/globals.css` : `--font-sans: var(--font-sans)` est auto-référentiel, la police Geist Sans chargée dans `layout.tsx` (`--font-geist-sans`) n'est jamais réellement branchée sur l'utilitaire Tailwind `font-sans` [app/globals.css:10]
+- [x] [Review][Patch] Le workflow CI (`.github/workflows/ci.yml`) n'exécute jamais `npm run lint` alors que le script existe dans `package.json` — les erreurs de lint peuvent passer inaperçues [.github/workflows/ci.yml]
+- [x] [Review][Patch] Version de Node non épinglée côté Netlify alors que la CI GitHub Actions pin Node 22 — risque de divergence de build entre CI et déploiement [netlify.toml, .github/workflows/ci.yml:10-15]
+- [x] [Review][Defer] Dépendance réseau de `next/font/google` en environnement de build sans accès internet [app/layout.tsx:1-12] — deferred, pre-existing (comportement par défaut du scaffold `create-next-app`, acceptable tant que CI/Netlify ont un accès réseau fiable)
+- [x] [Review][Defer] Variantes icône-seule de `components/ui/button.tsx` sans nom accessible (`aria-label`) [components/ui/button.tsx:24-35,45-56] — deferred, pre-existing (composant shadcn généré, non encore utilisé dans l'app)
 
 ## Dev Notes
 
@@ -154,3 +163,4 @@ Claude Sonnet 5 (GitHub Copilot CLI)
 
 - 2026-07-30 : Implémentation initiale de la story 1.1 — scaffold Next.js 16 + shadcn/ui + structure du spine + tests, à l'exception de la connexion Netlify effective (bloquée sur action utilisateur).
 - 2026-07-30 : Repo poussé sur GitHub (`jsoulet/pokebrets`), site Netlify connecté et déployé par l'utilisateur (https://crounch.johansoulet.fr/), déploiement vérifié. Toutes les tâches complètes.
+- 2026-07-30 : Revue de code adversariale (Blind Hunter + Edge Case Hunter + Acceptance Auditor) — 4 findings patchés (script `start`/export statique, variable de police auto-référentielle, lint absent en CI, version Node non épinglée sur Netlify), 2 findings différés (dépendance réseau `next/font/google`, accessibilité des boutons icône-seule non encore utilisés), 7 rejetés comme faux positifs (périmètre du diff plus étroit que le repo réel). Build/test/lint revalidés. Status → done.
