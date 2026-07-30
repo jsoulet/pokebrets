@@ -23,7 +23,12 @@ function toParseResult<Schema extends z.ZodType>(
     return { success: true, data: result.data };
   }
 
-  return { success: false, error: result.error.issues.map((issue) => issue.message) };
+  return {
+    success: false,
+    error: result.error.issues.map((issue) =>
+      issue.path.length > 0 ? `${issue.path.join(".")}: ${issue.message}` : issue.message,
+    ),
+  };
 }
 
 export function parseFlavor(input: unknown): ParseResult<z.infer<typeof flavorSchema>> {

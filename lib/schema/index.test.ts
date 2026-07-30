@@ -62,6 +62,7 @@ describe("parseCatalogue", () => {
     if (!result.success) {
       expect(Array.isArray(result.error)).toBe(true);
       expect(result.error.length).toBeGreaterThan(0);
+      expect(result.error.some((message) => message.startsWith("generatedAt:"))).toBe(true);
     }
   });
 });

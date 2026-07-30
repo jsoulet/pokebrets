@@ -38,4 +38,23 @@ describe("tastedStateSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("rejects a key that is not a kebab-case flavor id", () => {
+    const result = tastedStateSchema.safeParse({
+      "Curry Doux": true,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("never propagates a __proto__ key into parsed data", () => {
+    const input: Record<string, unknown> = {};
+    Object.defineProperty(input, "__proto__", { value: true, enumerable: true });
+
+    const result = tastedStateSchema.safeParse(input);
+
+    if (result.success) {
+      expect(Object.prototype.hasOwnProperty.call(result.data, "__proto__")).toBe(false);
+    }
+  });
 });

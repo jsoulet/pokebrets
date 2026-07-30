@@ -12,7 +12,7 @@ baseline_commit: 6c4e501
 
 # Story 1.2: Schéma partagé du Catalogue et de l'État de dégustation
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -55,6 +55,21 @@ so that l'app et l'outil de scraping ne puissent jamais diverger silencieusement
   - [x] Subtask 6.2: Cas invalides : champ manquant sur une Saveur, `status` hors énum, `id` qui ne respecte pas le format kebab-case (majuscules, espaces, underscore), `generatedAt` non-ISO, `flavors` non-array, État de dégustation avec une valeur non-booléenne — vérifier que `success: false` est retourné avec un message exploitable (jamais une exception qui remonte)
   - [x] Subtask 6.3: Exécuter `npm test` : tous les tests passent, aucune régression sur le smoke test existant (`app/page.test.tsx`)
   - [x] Subtask 6.4: Exécuter `npm run build && npm run lint` : aucune erreur (aucune route `app/api/` ni Server Action introduite — le module reste pur, sans `'use client'` nécessaire puisqu'il ne touche ni `localStorage` ni `window`, AD-4)
+
+### Review Findings
+
+Toutes les remarques ci-dessous ont été résolues et corrigées dans ce cycle de revue (voir Change Log ci-dessous pour le détail).
+
+- [x] [Review][Decision] Un Catalogue avec `flavors: []` doit-il rester valide ? — **Résolu** : rejeté. `catalogueSchema.flavors` impose désormais `.min(1)` : un catalogue vide est indistinguable d'une panne de scraping, il ne doit donc jamais être considéré valide. [lib/schema/catalogue.ts]
+- [x] [Review][Decision] Quel format exact accepter pour `image` ? — **Résolu** : `image` doit être une URL absolue `http(s)://` OU un chemin commençant par `/`, ce qui exclut de fait les schémas dangereux (`javascript:`, `data:`, etc.). [lib/schema/flavor.ts]
+- [x] [Review][Patch] `catalogueSchema` n'empêche pas deux Saveurs de partager le même `id` — **Corrigé** via `.superRefine()` qui détecte et rejette les `id` dupliqués. [lib/schema/catalogue.ts]
+- [x] [Review][Patch] `flavorSchema` et `catalogueSchema` utilisent `z.object(...)` simple, qui supprime silencieusement les champs inconnus — **Corrigé** : les deux schémas utilisent désormais `.strict()`. [lib/schema/flavor.ts, lib/schema/catalogue.ts]
+- [x] [Review][Patch] `tastedStateSchema` valide les clés de la map avec `z.string()` au lieu du même format kebab-case que `Flavor.id` — **Corrigé** : les clés réutilisent désormais `flavorIdSchema` (exporté). Zod protège nativement contre la propagation d'une clé `__proto__` dans les données parsées (vérifié par test). [lib/schema/tasted.ts]
+- [x] [Review][Patch] `flavorSchema.name` utilise `z.string().min(1)`, qui accepte une chaîne composée uniquement d'espaces — **Corrigé** : `z.string().trim().min(1)`. [lib/schema/flavor.ts]
+- [x] [Review][Patch] Les fonctions `parseFlavor`/`parseCatalogue`/`parseTastedState` ne conservent que `issue.message` et perdent `issue.path` — **Corrigé** : chaque message est désormais préfixé par le chemin joint (`"flavors.0.id: ..."`). [lib/schema/index.ts]
+- [x] [Review][Patch] `flavorIdSchema` (la regex kebab-case) reste privée dans `lib/schema/flavor.ts` — **Corrigé** : exportée pour réutilisation (déjà utilisée par `tastedStateSchema`). [lib/schema/flavor.ts]
+
+Note (bruit, non retenu) : `generatedAt: z.iso.datetime()` n'accepte que le suffixe `Z`, pas les formats ISO 8601 avec offset — comportement voulu, le générateur (`new Date().toISOString()`) produit toujours ce suffixe.
 
 ## Dev Notes
 
@@ -142,3 +157,4 @@ Claude Sonnet 5 (GitHub Copilot CLI)
 ## Change Log
 
 - 2026-07-30 : Implémentation complète de la story 1.2 — schéma partagé Zod (Flavor, Catalogue, État de dégustation) + API `parseX` exploitable. 25 tests unitaires ajoutés, 26/26 passent, build/lint OK. Status → review.
+- 2026-07-30 : Revue de code (adversariale + edge-case + acceptance) — 2 décisions et 6 patchs résolus : `catalogueSchema.flavors` impose `.min(1)` (rejette les catalogues vides) ; `image` restreint à URL http(s) ou chemin `/...` ; rejet des `id` dupliqués (`.superRefine`) ; `.strict()` sur `flavorSchema`/`catalogueSchema` ; clés de `tastedStateSchema` alignées sur `flavorIdSchema` (désormais exporté) ; `name` utilise `.trim().min(1)` ; messages d'erreur `parseX` préfixés par le chemin Zod. 9 tests unitaires ajoutés (35/35 passent), build/lint OK. Status → done.

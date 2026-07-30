@@ -22,13 +22,32 @@ describe("catalogueSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts a catalogue with an empty flavors list", () => {
+  it("rejects a catalogue with an empty flavors list", () => {
     const result = catalogueSchema.safeParse({
       generatedAt: "2026-07-30T12:00:00.000Z",
       flavors: [],
     });
 
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a catalogue with duplicate flavor ids", () => {
+    const result = catalogueSchema.safeParse({
+      generatedAt: "2026-07-30T12:00:00.000Z",
+      flavors: [validFlavor(), validFlavor({ name: "Curry Doux (bis)" })],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a catalogue with an unknown extra field", () => {
+    const result = catalogueSchema.safeParse({
+      generatedAt: "2026-07-30T12:00:00.000Z",
+      flavors: [validFlavor()],
+      extra: "not allowed",
+    });
+
+    expect(result.success).toBe(false);
   });
 
   it("rejects a non-ISO generatedAt", () => {

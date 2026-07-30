@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { flavorSchema } from "./flavor";
+import { flavorIdSchema, flavorSchema } from "./flavor";
+
+describe("flavorIdSchema", () => {
+  it("is exported for reuse by other schemas (e.g. tastedStateSchema keys)", () => {
+    expect(flavorIdSchema.safeParse("curry-doux").success).toBe(true);
+    expect(flavorIdSchema.safeParse("Curry Doux").success).toBe(false);
+  });
+});
+
 
 describe("flavorSchema", () => {
   it("accepts a well-formed active flavor", () => {
@@ -83,6 +91,51 @@ describe("flavorSchema", () => {
       id: "curry-doux",
       name: "",
       image: "/images/curry-doux.png",
+      status: "active",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a name made only of whitespace", () => {
+    const result = flavorSchema.safeParse({
+      id: "curry-doux",
+      name: "   ",
+      image: "/images/curry-doux.png",
+      status: "active",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an unknown extra field", () => {
+    const result = flavorSchema.safeParse({
+      id: "curry-doux",
+      name: "Curry Doux",
+      image: "/images/curry-doux.png",
+      status: "active",
+      extra: "not allowed",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an image using a dangerous scheme", () => {
+    const result = flavorSchema.safeParse({
+      id: "curry-doux",
+      name: "Curry Doux",
+      image: "javascript:alert(1)",
+      status: "active",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an image that is neither an absolute URL nor a path", () => {
+    const result = flavorSchema.safeParse({
+      id: "curry-doux",
+      name: "Curry Doux",
+      image: "curry-doux.png",
       status: "active",
     });
 
