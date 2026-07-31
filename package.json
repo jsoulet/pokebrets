@@ -8,6 +8,7 @@
     "start": "npx serve out",
     "lint": "eslint",
     "test": "vitest run",
+    "scrape": "tsx scripts/scrape-catalogue.ts",
     "verify": "npm run build && npm test"
   },
   "dependencies": {
@@ -35,6 +36,7 @@
     "eslint-config-next": "16.2.12",
     "jsdom": "^30.0.1",
     "tailwindcss": "^4",
+    "tsx": "^4.23.1",
     "typescript": "^5",
     "vitest": "^4.1.10"
   }

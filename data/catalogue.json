@@ -1,0 +1,365 @@
+{
+  "generatedAt": "2026-07-31T06:57:19.884Z",
+  "flavors": [
+    {
+      "id": "ail-confit-herbes-de-provence",
+      "name": "Ail Confit & Herbes de Provence",
+      "image": "https://cms.brets.fr/app/uploads/2026/06/ail-confit-et-herbes-de-provence-600-pixels.png",
+      "status": "active"
+    },
+    {
+      "id": "tajine-de-poulet-aux-epices",
+      "name": "Tajine de Poulet aux Épices",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/tajine-poulet-epices.png",
+      "status": "active"
+    },
+    {
+      "id": "brie-truffe",
+      "name": "Brie Truffe",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/brie-truffe.png",
+      "status": "active"
+    },
+    {
+      "id": "beurre-persille",
+      "name": "Beurre Persillé",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/beurre-persille.png",
+      "status": "active"
+    },
+    {
+      "id": "camembert-et-truffe",
+      "name": "Camembert & truffe",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/camembert-truffe.png",
+      "status": "active"
+    },
+    {
+      "id": "sauce-barbecue-flambee-au-whisky",
+      "name": "BBQ Flambé au whisky",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/bbq-flambe-aux-whisky.png",
+      "status": "active"
+    },
+    {
+      "id": "sauce-barbecue-a-la-mexicaine",
+      "name": "BBQ à la Mexicaine",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/bbq-a-la-mexicaine.png",
+      "status": "active"
+    },
+    {
+      "id": "bbq-jalapeno",
+      "name": "BBQ & Jalapeño",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/bbq-jalapeno.png",
+      "status": "active"
+    },
+    {
+      "id": "nature",
+      "name": "Nature",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/chips-de-crepes-natures-1.png",
+      "status": "active"
+    },
+    {
+      "id": "fruits-rouges",
+      "name": "Fruits rouges",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/chips-de-crepes-fruits-rouges-1.png",
+      "status": "active"
+    },
+    {
+      "id": "chips-saveur-beurre-citron-brets",
+      "name": "Beurre Citron",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/chips-de-crepes-beurre-citron-1.png",
+      "status": "active"
+    },
+    {
+      "id": "caramel-au-beurre-sale",
+      "name": "Caramel au beurre salé",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/chips-de-crepe-caramel-au-beurre-sale-1.png",
+      "status": "active"
+    },
+    {
+      "id": "cheddar-biere",
+      "name": "Cheddar Bière",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/cheddar-biere-1.png",
+      "status": "active"
+    },
+    {
+      "id": "sauce-barbecue",
+      "name": "Sauce Barbecue",
+      "image": "https://cms.brets.fr/app/uploads/2026/01/bbq-sauce.png",
+      "status": "active"
+    },
+    {
+      "id": "bio",
+      "name": "La chips Bio",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/bio.png",
+      "status": "active"
+    },
+    {
+      "id": "rotisserie-nature",
+      "name": "Chips Rôtisserie Nature",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/rotisserie_nature.png",
+      "status": "active"
+    },
+    {
+      "id": "la-paysanne",
+      "name": "La Paysanne",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/paysanne.png",
+      "status": "active"
+    },
+    {
+      "id": "sel-de-guerande",
+      "name": "Sel de Guérande",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/sarrasin-au-sel-de-guerande.png",
+      "status": "active"
+    },
+    {
+      "id": "loriginale",
+      "name": "L&rsquo;Originale",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/125g-originale-nut-b-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "nature-au-sel-de-guerande",
+      "name": "Nature au sel de Guérande",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/so-crack-nature-sel-de-guerande-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "legumes",
+      "name": "La chips de Légumes",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/legumes-100g-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "forestiere",
+      "name": "À la Forestière",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/chips-sarrasin-forestiere.png",
+      "status": "active"
+    },
+    {
+      "id": "curry-creme",
+      "name": "Curry Crème",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/3497917003595-sarrasin-curry-creme-120g-1.png",
+      "status": "active"
+    },
+    {
+      "id": "curry-fruite",
+      "name": "Curry fruité",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/so-crack-curry-fruite-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "moutarde-pickles",
+      "name": "Moutarde pickles",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/so-crack-moutarde-pickles-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "sweet-salty",
+      "name": "Sweet & salty",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/so-crack-sweet-salty-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "tomate-olive-origan",
+      "name": "Tomate, olive, origan",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/so-crack-tomate-olive-origan-70g-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "pizza-au-feu-de-bois",
+      "name": "Pizza au feu de bois",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/brets-pizza-125g-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "poivrons-grilles-chorizo",
+      "name": "Poivrons grillés chorizo",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/brets-poivrons-grilles-chorizo-125g-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "sauce-curry",
+      "name": "Sauce Curry",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/brets-sauce-curry-125g-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "sauce-pommes-frites",
+      "name": "Sauce Pommes Frites",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/brets-sauce-pommes-frites-125g-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "yakitori",
+      "name": "Yakitori",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/brets-yakitori-125g-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "rotisserie-ail-confit-et-herbes-de-provence",
+      "name": "Chips Rôtisserie Ail confit et herbes de Provence",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/rotisserie_ail.png",
+      "status": "active"
+    },
+    {
+      "id": "la-craquante-sel-de-guerande",
+      "name": "La Craquante",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/125g-la-craquante-nut-b-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "lancienne",
+      "name": "À l&rsquo;Ancienne",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/brets-a-l_ancienne-125g-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "cheddar-oignons",
+      "name": "Cheddar oignons de Roscoff",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/brets-cheddar-oignon-de-roscoff-125g-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "chevre-piment-despelette",
+      "name": "Chèvre & piment d&rsquo;Espelette",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/brets-chevre-piment-d_espelette-125g-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "fromage-frais-fines-herbes",
+      "name": "Fromage Frais & fines herbes",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/brets-fromage-frais-125g-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "moutarde-au-piment-de-cayenne",
+      "name": "Moutarde au Piment de Cayenne",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/brets-moutarde-piment-de-cayenne-125g-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "petits-oignons",
+      "name": "Petits Oignons",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/brets-petits-oignons-125g-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "pili-pili",
+      "name": "Pili Pili",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/brets-pili-pili-125g-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "aligot",
+      "name": "Aligot à l&rsquo;Aveyronnaise",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/brets-aligot-125g-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "beurre-sale",
+      "name": "Beurre salé",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/brets-beurre-sale-125g-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "camembert",
+      "name": "Camembert",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/brets-camembert-125g-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "carbonade-flamande",
+      "name": "Carbonade Flamande",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/brets-carbonade-flamande-125g-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "bleu-dauvergne-aop",
+      "name": "Bleu d&rsquo;Auvergne AOP",
+      "image": "https://cms.brets.fr/app/uploads/2026/02/brets-bleu-auvergne-aop-125g-recto.png",
+      "status": "active"
+    },
+    {
+      "id": "cepes",
+      "name": "Cèpes",
+      "image": "https://cms.brets.fr/app/uploads/2026/01/cepes.png",
+      "status": "active"
+    },
+    {
+      "id": "carbonara",
+      "name": "Carbonara",
+      "image": "https://cms.brets.fr/app/uploads/2026/01/carbonara.png",
+      "status": "active"
+    },
+    {
+      "id": "falafel-a-la-libanaise",
+      "name": "Falafels à la libanaise",
+      "image": "https://cms.brets.fr/app/uploads/2026/01/falafels.png",
+      "status": "active"
+    },
+    {
+      "id": "tartiflette",
+      "name": "Tartiflette",
+      "image": "https://cms.brets.fr/app/uploads/2026/01/tartiflette.png",
+      "status": "active"
+    },
+    {
+      "id": "cheddar-jalapeno",
+      "name": "Cheddar Jalapeño",
+      "image": "https://cms.brets.fr/app/uploads/2026/01/cheddar-jalapeno.png",
+      "status": "active"
+    },
+    {
+      "id": "sel-vinaigre",
+      "name": "Sel & Vinaigre",
+      "image": "https://cms.brets.fr/app/uploads/2026/01/sel-et-vinaigre.png",
+      "status": "active"
+    },
+    {
+      "id": "poulet-braise",
+      "name": "Poulet Braisé",
+      "image": "https://cms.brets.fr/app/uploads/2026/01/poulet-braise-1.png",
+      "status": "active"
+    },
+    {
+      "id": "pesto-mozzarella",
+      "name": "Pesto Mozzarella",
+      "image": "https://cms.brets.fr/app/uploads/2026/01/pesto-mozarella.png",
+      "status": "active"
+    },
+    {
+      "id": "miel-moutarde",
+      "name": "Miel Moutarde",
+      "image": "https://cms.brets.fr/app/uploads/2026/01/miel-moutarde.png",
+      "status": "active"
+    },
+    {
+      "id": "fromage-du-jura",
+      "name": "Fromage du Jura",
+      "image": "https://cms.brets.fr/app/uploads/2026/01/jura.png",
+      "status": "active"
+    },
+    {
+      "id": "cote-de-boeuf-grillee",
+      "name": "Côte de Boeuf Grillée",
+      "image": "https://cms.brets.fr/app/uploads/2026/01/cote-de-boeuf.png",
+      "status": "active"
+    },
+    {
+      "id": "bacon-grille",
+      "name": "Bacon Grillé",
+      "image": "https://cms.brets.fr/app/uploads/2026/01/bacon-grille.png",
+      "status": "active"
+    },
+    {
+      "id": "aioli",
+      "name": "Aïoli",
+      "image": "https://cms.brets.fr/app/uploads/2026/01/aioli.png",
+      "status": "active"
+    },
+    {
+      "id": "kebab",
+      "name": "Kebab",
+      "image": "https://cms.brets.fr/app/uploads/2025/12/brets-kebab-125g-recto-1.png",
+      "status": "active"
+    }
+  ]
+}
