@@ -12,3 +12,8 @@
 ## Deferred from: code review of story-1-3 (2026-07-31)
 
 - `useCatalogue()` déclenche un fetch réseau indépendant par instance montée, sans déduplication ni synchronisation inter-onglets (via un event `storage` ou un cache partagé). Pertinent seulement une fois le hook réellement consommé par un ou plusieurs composants (story 1.4+) — pas de consommateur n'existe encore à ce stade.
+
+## Deferred from: code review of story-1-4 (2026-07-31)
+
+- Le bouton "Réessayer" (`catalogue-page-client.tsx`) ne montre aucun état "en cours" pendant `retry()` : `useCatalogue()` (Story 1.3) n'expose que `loading`/`ready`/`error`, pas de statut intermédiaire type `retrying`. Nécessite une évolution du contrat du hook — hors scope pour un composant de présentation pur (Story 1.4).
+- Pas d'état vide dédié si `data.flavors` est un tableau vide (catalogue scrappé sans résultat) : la grille afficherait un espace blanc sans message. Scénario peu probable (Story 1.9 garantit un catalogue non vide via `data/catalogue.json`) mais non couvert par un test ou un message dédié.

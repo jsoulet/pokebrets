@@ -8,7 +8,7 @@ export function CatalogueGridSkeleton() {
     <div
       role="status"
       aria-label="Chargement du catalogue"
-      className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-3 p-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+      className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-3 p-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7"
     >
       {Array.from({ length: PLACEHOLDER_COUNT }, (_, index) => (
         <div

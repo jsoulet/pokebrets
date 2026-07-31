@@ -14,7 +14,7 @@ inputDocuments:
 
 # Story 1.4: Affichage du Catalogue en grille visuelle
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -139,6 +139,9 @@ Claude Sonnet 5 (GitHub Copilot CLI)
 - `npm test -- --run` → 110/110 tests passing (13 nouveaux : 3 `catalogue-tile`, 2 `catalogue-grid`, 1 `catalogue-grid-skeleton`, 3 `catalogue-page-client`, 2 `app/page.test.tsx` mis à jour), aucune régression.
 - `npm run lint` → 0 erreur, 1 avertissement attendu (`@next/next/no-img-element` sur `catalogue-tile.tsx`) — intentionnel (voir Completion Notes).
 - `npm run build` → succès, `/` toujours prérendu statiquement (`○ (Static)`). Vérifié que le HTML statique exporté (`out/index.html`) contient bien le skeleton (`role="status"`) au lieu de la grille : `localStorage` est indisponible côté Node pendant l'export, `readCache()` (Story 1.3) capture ce cas via son try/catch existant et retourne `null`, donc le hook démarre en `"loading"` — comportement correct pour du stale-while-revalidate en export statique.
+- [Review] `npm test -- --run` → 110/110 après application des patchs de revue (aucun nouveau test ajouté, les patchs ne changent pas de comportement testé — classes Tailwind, fond de tuile, repli image, `role="alert"`, `line-clamp`).
+- [Review] `npm run lint` → 0 erreur, 1 avertissement inchangé (`@next/next/no-img-element`).
+- [Review] `npm run build` → succès, export statique inchangé.
 
 ### Completion Notes List
 
@@ -166,7 +169,34 @@ Claude Sonnet 5 (GitHub Copilot CLI)
 - `components/catalogue/catalogue-page-client.tsx` — nouveau, frontière client consommant `useCatalogue()`.
 - `components/catalogue/catalogue-page-client.test.tsx` — nouveau, 3 tests.
 
+## Review Findings
+
+Revue croisée (Blind Hunter, Edge Case Hunter, Acceptance Auditor) sur `0c0d7d7` vs baseline `71b835f...` (`app/` + `components/`, 12 fichiers, 283 lignes).
+
+### Patch (appliqués)
+
+- [x] **AC #5 non respecté** : à `≥ lg` (desktop), la grille affichait 5 colonnes puis 6 seulement à `xl`, alors qu'EXPERIENCE.md exige "6+ colonnes" dès `≥ lg`. Corrigé dans `catalogue-grid.tsx` et `catalogue-grid-skeleton.tsx` (mêmes classes, pas de CLS).
+- [x] **AC #4 partiellement respecté** : le chip-tile utilisait `bg-card` (blanc shadcn) au lieu du token `{colors.background}` (crème) prescrit par DESIGN.md, et la variante archivée ne changeait pas le fond de la tuile (`chip-tile-archived: background: {colors.archived}`) — seul le badge portait la couleur. Corrigé dans `catalogue-tile.tsx`.
+- [x] **Pas de repli image cassée** : `<img>` sans `onError`, une URL cassée/offline dégradait en icône d'erreur navigateur. Ajout d'un fallback `onError` vers un placeholder local.
+- [x] **État d'erreur non annoncé aux lecteurs d'écran** : pas de `role="alert"` sur le message d'erreur. Ajouté dans `catalogue-page-client.tsx`.
+- [x] **Noms longs sans troncature** : nom de Saveur en `<span>` sans `line-clamp`, risque de hauteurs de cartes irrégulières. Ajout de `line-clamp-2` dans `catalogue-tile.tsx`.
+
+### Deferred (voir `deferred-work.md`)
+
+- [ ] **Pas d'état "en cours" pour le bouton Réessayer** : `useCatalogue()` (Story 1.3) n'expose que `loading`/`ready`/`error`, pas de statut intermédiaire pendant `retry()`. Nécessite une évolution du contrat du hook, hors scope de cette story (composant de présentation uniquement).
+- [ ] **Pas d'état vide explicite** : si `data.flavors` est un tableau vide (catalogue scrappé sans résultat), la grille ne montre qu'un espace blanc sans message dédié. Scénario peu probable (Story 1.9 garantit un catalogue non vide) mais non couvert.
+
+### Dismiss (aucune action)
+
+- Tokens `--success`/`--archived` absents de `.dark` : DESIGN.md exclut explicitement le dark mode en v1 (`[ASSUMPTION: pas de dark mode en v1]`).
+- `data?.flavors ?? []` : chaînage optionnel défensif cohérent avec le contrat du hook (garanti non-null en `ready`), inoffensif.
+- Skeleton en `<div>` plutôt que `<ul>/<li>` : pattern `role="status"` standard pour un placeholder de chargement, pas un défaut réel.
+- Contraste `--accent`/`--accent-foreground` : token non consommé par l'UI de cette story (aucun composant audité ne l'utilise) ; à revisiter s'il est utilisé plus tard.
+- `loading="lazy"` sur toutes les images (y compris au-dessus de la ligne de flottaison) : impact LCP réel mais mineur pour une app personnelle à faible trafic ; non spécifié par l'AC, complexité non justifiée.
+- Hypothèse Edge Case Hunter sur une non-hydratation de `CataloguePageClient` : spéculative, non étayée par le code réel (`app/page.tsx` rend le composant client sans condition).
+
 ## Change Log
 
 - 2026-07-31 : Story context créée pour la Story 1.4 (“Affichage du Catalogue en grille visuelle”). Analyse croisée epics / architecture / UX / PRD / code existant terminée ; guide développeur complet produit ; Status → `ready-for-dev`.
 - 2026-07-31 : Implémentation de la grille Catalogue (`components/catalogue/`), branchement sur `useCatalogue()` (Story 1.3), identité visuelle Crounch (couleurs + police Inter). 13 nouveaux tests, 110/110 au total, `build`/`lint` propres. Status → `review`.
+- 2026-07-31 : Revue de code (Blind Hunter, Edge Case Hunter, Acceptance Auditor) — 5 patchs appliqués (breakpoints `≥lg` → 6+ colonnes conformes UX-DR13, fond de tuile `{colors.background}`/`{colors.archived}` conforme DESIGN.md, repli image cassée, `role="alert"` sur l'erreur, `line-clamp-2` sur le nom). 2 items différés (`deferred-work.md`) : statut "en cours" du bouton Réessayer, état vide explicite. 110/110 tests, lint/build propres. Status → `done`.

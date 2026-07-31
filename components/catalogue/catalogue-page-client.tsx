@@ -19,7 +19,10 @@ export function CataloguePageClient() {
 
   if (status === "error") {
     return (
-      <div className="flex flex-col items-center gap-3 p-8 text-center">
+      <div
+        role="alert"
+        className="flex flex-col items-center gap-3 p-8 text-center"
+      >
         <p className="text-foreground">{error}</p>
         <Button onClick={retry}>Réessayer</Button>
       </div>
