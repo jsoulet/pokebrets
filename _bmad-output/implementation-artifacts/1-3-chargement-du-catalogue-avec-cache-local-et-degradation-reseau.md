@@ -2,6 +2,7 @@
 epic_num: 1
 story_num: 3
 story_key: 1-3-chargement-du-catalogue-avec-cache-local-et-degradation-reseau
+baseline_commit: ced1da58206304ec97b0cce07b3281219bd25897
 inputDocuments:
   - '_bmad-output/planning-artifacts/epics.md'
   - '_bmad-output/planning-artifacts/architecture/architecture-crounch-2026-07-30/ARCHITECTURE-SPINE.md'
@@ -11,7 +12,7 @@ inputDocuments:
 
 # Story 1.3: Chargement du Catalogue avec cache local et dégradation réseau
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -33,35 +34,35 @@ so that je puisse toujours voir un catalogue (même périmé) plutôt qu'un écr
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Définir l'API publique de `lib/catalogue/` (AC: #1, #2, #6, #7)
-  - [ ] Subtask 1.1: Remplacer le stub `lib/catalogue/index.ts` (story 1.1, `export {}`) par un module `'use client'` exposant un hook `useCatalogue()` — c'est la seule porte d'entrée pour l'app (AC #6), aucun autre module ne doit lire `localStorage` ou fetcher `catalogue.json` directement.
-  - [ ] Subtask 1.2: Définir le type de retour du hook : `{ data: Catalogue | null; status: "loading" | "ready" | "error"; error: string | null; retry: () => void }`. `status` distingue explicitement "chargement initial sans aucune donnée" (`loading`) de "des données sont affichées, qu'elles soient fraîches ou en cours de revalidation" (`ready`) — le composant appelant (story 1.4) n'a jamais besoin d'inspecter `data` pour savoir quoi afficher.
-  - [ ] Subtask 1.3: Documenter en commentaire que `lib/catalogue/` est le seul propriétaire de la fraîcheur (AD-2) — aucune autre partie de l'app ne doit dupliquer la logique de comparaison de révision ou l'accès au cache.
-- [ ] Task 2: Implémenter le cache local (lecture/écriture) (AC: #1, #6, #7)
-  - [ ] Subtask 2.1: Créer une fonction interne `readCache(): Catalogue | null` qui lit une clé `localStorage` dédiée (ex: `"crounch:catalogue"`), parse le JSON stocké via `parseCatalogue` (`lib/schema`), et retourne `null` si absent, illisible, ou invalide contre le schéma (jamais de throw — un cache corrompu est traité comme "pas de cache", pas comme un crash).
-  - [ ] Subtask 2.2: Créer une fonction interne `writeCache(catalogue: Catalogue): void` qui sérialise et écrit dans la même clé — appelée uniquement après validation réussie d'une réponse réseau (jamais un payload non validé n'atteint le cache).
-  - [ ] Subtask 2.3: Encapsuler tout accès `localStorage` dans un try/catch (Safari mode privé, quota dépassé, etc.) — un échec d'écriture cache ne doit jamais faire planter le hook, seulement dégrader silencieusement vers "pas de persistance cette session".
-- [ ] Task 3: Implémenter le fetch réseau et la validation (AC: #2, #3, #5, #7)
-  - [ ] Subtask 3.1: Définir la constante `CATALOGUE_URL` pointant vers `https://raw.githubusercontent.com/jsoulet/pokebrets/main/data/catalogue.json` (repo GitHub du projet, cf. Dev Notes) — jamais un chemin `public/` ni un `import` statique du JSON.
-  - [ ] Subtask 3.2: Implémenter `fetchCatalogue(): Promise<ParseResult<Catalogue>>` qui fetch l'URL, traite une réponse non-2xx comme un échec (jamais de throw non catché), parse le corps JSON (un JSON malformé est aussi un échec, pas une exception qui remonte), puis valide via `parseCatalogue` (`lib/schema`) — les 3 causes d'échec (réseau, non-2xx, JSON hors schéma) sont unifiées dans le même résultat `{ success: false }` (AD-3).
-  - [ ] Subtask 3.3: Ne jamais laisser une exception réseau (ex: `fetch` qui rejette) remonter non catchée — encapsuler dans un try/catch et convertir en `{ success: false, error: [...] }`.
-- [ ] Task 4: Orchestrer stale-while-revalidate et la dégradation (AC: #1, #2, #3, #4)
-  - [ ] Subtask 4.1: Au montage du hook : lire le cache (Task 2). S'il existe, définir immédiatement `status: "ready"` avec les données du cache, puis déclencher le fetch réseau (Task 3) en arrière-plan.
-  - [ ] Subtask 4.2: Si aucun cache n'existe au montage : définir `status: "loading"`, attendre la réponse du fetch avant d'afficher quoi que ce soit.
-  - [ ] Subtask 4.3: À la réception d'une réponse réseau réussie : comparer `response.generatedAt` à la révision actuellement détenue (celle du cache ou d'une réponse précédente déjà appliquée) — n'appliquer la nouvelle réponse (mise à jour de l'état + `writeCache`) QUE si sa révision est plus récente ou qu'aucune révision n'est encore détenue (AC #4). Une réponse plus ancienne est silencieusement ignorée (ni erreur, ni écrasement).
-  - [ ] Subtask 4.4: À la réception d'un échec réseau (Task 3) : si un cache/donnée existait déjà (`status` était `ready`), ne rien changer — le cache reste affiché intact, l'échec de revalidation est silencieux pour l'utilisateur (AC #3). Si aucune donnée n'existait (`status` était `loading`), passer à `status: "error"` avec un message exploitable ("Impossible de charger le catalogue, vérifie ta connexion") (AC #2).
-  - [ ] Subtask 4.5: Implémenter `retry()` : ré-invoque le fetch réseau (Task 3) en respectant la même logique de comparaison de révision (Subtask 4.3/4.4) — ne réinitialise jamais `status` à `loading` s'il y a déjà des données affichées (un retry en présence de cache reste une revalidation en arrière-plan, pas un nouvel écran de chargement).
-- [ ] Task 5: Tests unitaires exhaustifs (AC: #1, #2, #3, #4, #5, #6, #7)
-  - [ ] Subtask 5.1: Mocker `global.fetch` et `localStorage` (déjà disponible via l'environnement `jsdom` de Vitest) pour chaque scénario ci-dessous — aucun test ne doit effectuer de vrai appel réseau.
-  - [ ] Subtask 5.2: Cache existant + fetch réussi avec révision plus récente → données affichées immédiatement depuis le cache (`status: "ready"` dès le premier rendu), puis remplacées par la réponse réseau, cache mis à jour.
-  - [ ] Subtask 5.3: Aucun cache + fetch réussi → `status` passe de `"loading"` à `"ready"`, cache écrit.
-  - [ ] Subtask 5.4: Aucun cache + fetch échoué (réseau, non-2xx, et JSON invalide — les 3 cas testés séparément) → `status: "error"` avec message exploitable, jamais de throw non catché.
-  - [ ] Subtask 5.5: Cache existant + fetch de revalidation échoué (réseau, non-2xx, et JSON invalide) → cache existant conservé intact, `status` reste `"ready"`, aucune erreur exposée à l'utilisateur.
-  - [ ] Subtask 5.6: Deux réponses réseau concurrentes, la plus ancienne arrivant après la plus récente (par `generatedAt`) → seule la plus récente est retenue dans l'état final et dans le cache.
-  - [ ] Subtask 5.7: Cache local corrompu (JSON invalide ou ne validant pas contre `lib/schema` stocké dans `localStorage`) → traité comme "pas de cache" (`status: "loading"` puis dépend du fetch), jamais de crash au montage.
-  - [ ] Subtask 5.8: `retry()` après un état d'erreur → relance le fetch et peut aboutir à `status: "ready"` si le réseau revient.
-  - [ ] Subtask 5.9: Exécuter `npm test` : tous les tests passent, aucune régression sur les suites existantes (`lib/schema/*`, `app/page.test.tsx`).
-  - [ ] Subtask 5.10: Exécuter `npm run build && npm run lint` : aucune erreur — vérifier que `lib/catalogue/index.ts` porte bien `'use client'` et n'est référencé par aucun Server Component (aucun composant ne le consomme encore, cette story reste dans `lib/catalogue/` — l'intégration dans `app/page.tsx` est la story 1.4).
+- [x] Task 1: Définir l'API publique de `lib/catalogue/` (AC: #1, #2, #6, #7)
+  - [x] Subtask 1.1: Remplacer le stub `lib/catalogue/index.ts` (story 1.1, `export {}`) par un module `'use client'` exposant un hook `useCatalogue()` — c'est la seule porte d'entrée pour l'app (AC #6), aucun autre module ne doit lire `localStorage` ou fetcher `catalogue.json` directement.
+  - [x] Subtask 1.2: Définir le type de retour du hook : `{ data: Catalogue | null; status: "loading" | "ready" | "error"; error: string | null; retry: () => void }`. `status` distingue explicitement "chargement initial sans aucune donnée" (`loading`) de "des données sont affichées, qu'elles soient fraîches ou en cours de revalidation" (`ready`) — le composant appelant (story 1.4) n'a jamais besoin d'inspecter `data` pour savoir quoi afficher.
+  - [x] Subtask 1.3: Documenter en commentaire que `lib/catalogue/` est le seul propriétaire de la fraîcheur (AD-2) — aucune autre partie de l'app ne doit dupliquer la logique de comparaison de révision ou l'accès au cache.
+- [x] Task 2: Implémenter le cache local (lecture/écriture) (AC: #1, #6, #7)
+  - [x] Subtask 2.1: Créer une fonction interne `readCache(): Catalogue | null` qui lit une clé `localStorage` dédiée (ex: `"crounch:catalogue"`), parse le JSON stocké via `parseCatalogue` (`lib/schema`), et retourne `null` si absent, illisible, ou invalide contre le schéma (jamais de throw — un cache corrompu est traité comme "pas de cache", pas comme un crash).
+  - [x] Subtask 2.2: Créer une fonction interne `writeCache(catalogue: Catalogue): void` qui sérialise et écrit dans la même clé — appelée uniquement après validation réussie d'une réponse réseau (jamais un payload non validé n'atteint le cache).
+  - [x] Subtask 2.3: Encapsuler tout accès `localStorage` dans un try/catch (Safari mode privé, quota dépassé, etc.) — un échec d'écriture cache ne doit jamais faire planter le hook, seulement dégrader silencieusement vers "pas de persistance cette session".
+- [x] Task 3: Implémenter le fetch réseau et la validation (AC: #2, #3, #5, #7)
+  - [x] Subtask 3.1: Définir la constante `CATALOGUE_URL` pointant vers `https://raw.githubusercontent.com/jsoulet/pokebrets/main/data/catalogue.json` (repo GitHub du projet, cf. Dev Notes) — jamais un chemin `public/` ni un `import` statique du JSON.
+  - [x] Subtask 3.2: Implémenter `fetchCatalogue(): Promise<ParseResult<Catalogue>>` qui fetch l'URL, traite une réponse non-2xx comme un échec (jamais de throw non catché), parse le corps JSON (un JSON malformé est aussi un échec, pas une exception qui remonte), puis valide via `parseCatalogue` (`lib/schema`) — les 3 causes d'échec (réseau, non-2xx, JSON hors schéma) sont unifiées dans le même résultat `{ success: false }` (AD-3).
+  - [x] Subtask 3.3: Ne jamais laisser une exception réseau (ex: `fetch` qui rejette) remonter non catchée — encapsuler dans un try/catch et convertir en `{ success: false, error: [...] }`.
+- [x] Task 4: Orchestrer stale-while-revalidate et la dégradation (AC: #1, #2, #3, #4)
+  - [x] Subtask 4.1: Au montage du hook : lire le cache (Task 2). S'il existe, définir immédiatement `status: "ready"` avec les données du cache, puis déclencher le fetch réseau (Task 3) en arrière-plan.
+  - [x] Subtask 4.2: Si aucun cache n'existe au montage : définir `status: "loading"`, attendre la réponse du fetch avant d'afficher quoi que ce soit.
+  - [x] Subtask 4.3: À la réception d'une réponse réseau réussie : comparer `response.generatedAt` à la révision actuellement détenue (celle du cache ou d'une réponse précédente déjà appliquée) — n'appliquer la nouvelle réponse (mise à jour de l'état + `writeCache`) QUE si sa révision est plus récente ou qu'aucune révision n'est encore détenue (AC #4). Une réponse plus ancienne est silencieusement ignorée (ni erreur, ni écrasement).
+  - [x] Subtask 4.4: À la réception d'un échec réseau (Task 3) : si un cache/donnée existait déjà (`status` était `ready`), ne rien changer — le cache reste affiché intact, l'échec de revalidation est silencieux pour l'utilisateur (AC #3). Si aucune donnée n'existait (`status` était `loading`), passer à `status: "error"` avec un message exploitable ("Impossible de charger le catalogue, vérifie ta connexion") (AC #2).
+  - [x] Subtask 4.5: Implémenter `retry()` : ré-invoque le fetch réseau (Task 3) en respectant la même logique de comparaison de révision (Subtask 4.3/4.4) — ne réinitialise jamais `status` à `loading` s'il y a déjà des données affichées (un retry en présence de cache reste une revalidation en arrière-plan, pas un nouvel écran de chargement).
+- [x] Task 5: Tests unitaires exhaustifs (AC: #1, #2, #3, #4, #5, #6, #7)
+  - [x] Subtask 5.1: Mocker `global.fetch` et `localStorage` (déjà disponible via l'environnement `jsdom` de Vitest) pour chaque scénario ci-dessous — aucun test ne doit effectuer de vrai appel réseau.
+  - [x] Subtask 5.2: Cache existant + fetch réussi avec révision plus récente → données affichées immédiatement depuis le cache (`status: "ready"` dès le premier rendu), puis remplacées par la réponse réseau, cache mis à jour.
+  - [x] Subtask 5.3: Aucun cache + fetch réussi → `status` passe de `"loading"` à `"ready"`, cache écrit.
+  - [x] Subtask 5.4: Aucun cache + fetch échoué (réseau, non-2xx, et JSON invalide — les 3 cas testés séparément) → `status: "error"` avec message exploitable, jamais de throw non catché.
+  - [x] Subtask 5.5: Cache existant + fetch de revalidation échoué (réseau, non-2xx, et JSON invalide) → cache existant conservé intact, `status` reste `"ready"`, aucune erreur exposée à l'utilisateur.
+  - [x] Subtask 5.6: Deux réponses réseau concurrentes, la plus ancienne arrivant après la plus récente (par `generatedAt`) → seule la plus récente est retenue dans l'état final et dans le cache.
+  - [x] Subtask 5.7: Cache local corrompu (JSON invalide ou ne validant pas contre `lib/schema` stocké dans `localStorage`) → traité comme "pas de cache" (`status: "loading"` puis dépend du fetch), jamais de crash au montage.
+  - [x] Subtask 5.8: `retry()` après un état d'erreur → relance le fetch et peut aboutir à `status: "ready"` si le réseau revient.
+  - [x] Subtask 5.9: Exécuter `npm test` : tous les tests passent, aucune régression sur les suites existantes (`lib/schema/*`, `app/page.test.tsx`).
+  - [x] Subtask 5.10: Exécuter `npm run build && npm run lint` : aucune erreur — vérifier que `lib/catalogue/index.ts` porte bien `'use client'` et n'est référencé par aucun Server Component (aucun composant ne le consomme encore, cette story reste dans `lib/catalogue/` — l'intégration dans `app/page.tsx` est la story 1.4).
 
 ## Dev Notes
 
@@ -112,10 +113,34 @@ so that je puisse toujours voir un catalogue (même périmé) plutôt qu'un écr
 
 ### Agent Model Used
 
+Claude Sonnet 5 (GitHub Copilot CLI)
+
 ### Debug Log References
+
+- `npm test -- --run` → 97/97 tests passing (24 nouveaux dans `lib/catalogue/`, aucune régression sur les 73 existants).
+- `npm run build` → succès, `/` toujours prérendu statiquement (`○ (Static)`) — confirme que `'use client'` isole bien l'accès à `localStorage`/`fetch` du prerender (AD-4, AC #7), même si `useCatalogue()` n'est pas encore consommé par un composant (intégration = story 1.4).
+- `npm run lint` → une erreur `react-hooks/set-state-in-effect` détectée et corrigée (voir Completion Notes) avant validation finale, propre après correctif.
+- `npm run scrape` non ré-exécuté dans cette story (aucun changement au scraper) ; `data/catalogue.json` réel (60 saveurs, story 1.9) reste la donnée exposée par `CATALOGUE_URL` en production.
 
 ### Completion Notes List
 
+- Implémenté `lib/catalogue/` en 3 modules : `cache.ts` (lecture/écriture `localStorage`, jamais de throw), `fetch.ts` (fetch + validation unifiées via `parseCatalogue`, jamais de throw), `index.ts` (hook `useCatalogue()`, seule porte d'entrée publique, `'use client'`).
+- Stale-while-revalidate implémenté via un état initialisé en **initialiseur paresseux** de `useState` (lecture du cache synchrone au premier rendu) plutôt que dans un `useEffect` — évite l'anti-pattern "setState synchrone dans un effect" (cascading renders) détecté par `eslint-plugin-react-hooks` (`react-hooks/set-state-in-effect`) et corrigé pendant l'implémentation. Seul le déclenchement du fetch réseau reste dans l'effet (Subtask 4.1/4.2).
+- Comparaison de révision monotone (AC #4) implémentée via un `useRef` (pas un state) tenant la dernière `generatedAt` appliquée — une réponse plus ancienne ou égale est silencieusement ignorée, jamais d'écrasement ni d'erreur exposée.
+- Dégradation réseau (AC #2/#3) : `status` ne repasse JAMAIS à `"loading"` une fois des données affichées (cache ou réponse réseau) — un échec de revalidation en arrière-plan (réseau, non-2xx, JSON invalide) est silencieux tant qu'un cache existe ; sans aucune donnée, il produit `status: "error"` avec le message exploitable prescrit par la story.
+- `retry()` réutilise exactement la même fonction `revalidate()` interne que la revalidation automatique au montage — aucune duplication de la logique de comparaison de révision (Subtask 4.5).
+- 24 tests écrits en TDD strict (red confirmé avant chaque implémentation) : 7 pour `cache.ts` (absent/valide/JSON invalide/schéma invalide/`getItem` qui throw/écriture normale/`setItem` qui throw), 5 pour `fetch.ts` (succès, non-2xx, JSON invalide, schéma invalide, rejet réseau), 12 pour le hook `useCatalogue` couvrant exhaustivement les Subtasks 5.2 à 5.8 (cache+plus récent, sans cache+succès, sans cache+3 types d'échec, cache+revalidation échouée x3 types, réponse concurrente plus ancienne ignorée, cache corrompu x2 types, retry après erreur).
+- Aucune nouvelle dépendance ajoutée — `@testing-library/react` (pour `renderHook`/`waitFor`/`act`) était déjà présente dans `devDependencies` depuis story 1.1/1.2.
+
 ### File List
 
+- `lib/catalogue/index.ts` — remplace le stub de la story 1.1 ; hook `useCatalogue()`, `'use client'`, seule porte d'entrée publique du module.
+- `lib/catalogue/index.test.tsx` — 12 tests couvrant les Subtasks 5.2–5.8.
+- `lib/catalogue/cache.ts` — `readCache`/`writeCache`, clé `localStorage` `"crounch:catalogue"`.
+- `lib/catalogue/cache.test.ts` — 7 tests.
+- `lib/catalogue/fetch.ts` — `fetchCatalogue`, constante `CATALOGUE_URL`.
+- `lib/catalogue/fetch.test.ts` — 5 tests.
+
 ## Change Log
+
+- 2026-07-31 : Implémentation initiale de `lib/catalogue/` (cache local, fetch réseau, hook `useCatalogue()` avec stale-while-revalidate). 24 tests ajoutés, 97/97 tests passants au total, `build`/`lint` propres. Status → `review`.
