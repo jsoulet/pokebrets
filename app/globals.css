@@ -46,27 +46,38 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --color-success: var(--success);
+  --color-archived: var(--archived);
 }
 
 :root {
-  --background: oklch(1 0 0);
+  /* Identité Crounch (DESIGN.md > Colors) — tokens de marque injectés dans
+     les variables shadcn existantes plutôt que dispersés en hex dans les
+     composants (Subtask 3.1). */
+  --background: #fdf0dd;
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: #dda138;
+  --primary-foreground: oklch(0.145 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --accent: #e8482c;
+  --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
+  /* Badge "goûtée" (Story 1.5) et badge "archivée" (Story 1.4, AC #2) — un
+     fond neutre reste la règle sur la tuile elle-même (anti-pattern "feu
+     tricolore" rejeté, cf. DESIGN.md), ces couleurs ne servent qu'aux
+     petits badges/accents ponctuels. */
+  --success: #3fa34d;
+  --archived: #c9c2b4;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
