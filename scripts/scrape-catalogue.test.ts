@@ -11,10 +11,8 @@ describe("runScrape", () => {
 
     const result = await runScrape({
       fetchBretsProducts: vi.fn().mockResolvedValue(bretsProducts),
-      fetchOffProducts: vi.fn().mockResolvedValue([]),
       readPreviousCatalogue: vi.fn().mockReturnValue(null),
       readIdentityRegistry: vi.fn().mockReturnValue({}),
-      readOffMatchingTable: vi.fn().mockReturnValue({}),
       writeCatalogueFiles,
     });
 
@@ -36,10 +34,8 @@ describe("runScrape", () => {
 
     const result = await runScrape({
       fetchBretsProducts: vi.fn().mockResolvedValue(bretsProducts),
-      fetchOffProducts: vi.fn().mockResolvedValue([]),
       readPreviousCatalogue: vi.fn().mockReturnValue(null),
       readIdentityRegistry: vi.fn().mockReturnValue({}),
-      readOffMatchingTable: vi.fn().mockReturnValue({}),
       writeCatalogueFiles,
     });
 
@@ -55,10 +51,8 @@ describe("runScrape", () => {
 
     const result = await runScrape({
       fetchBretsProducts: vi.fn().mockRejectedValue(new Error("network down")),
-      fetchOffProducts: vi.fn().mockResolvedValue([]),
       readPreviousCatalogue: vi.fn().mockReturnValue(null),
       readIdentityRegistry: vi.fn().mockReturnValue({}),
-      readOffMatchingTable: vi.fn().mockReturnValue({}),
       writeCatalogueFiles,
     });
 
@@ -69,23 +63,45 @@ describe("runScrape", () => {
     }
   });
 
-  it("does not fail the whole scrape when Open Food Facts (complement-only, AD-5) is unavailable", async () => {
-    const bretsProducts: BretsProduct[] = [
-      { bretsId: 1, slug: "curry-doux", name: "Curry Doux", image: "https://cms.brets.fr/curry.png" },
-    ];
+  it("returns a failure (never throws) without writing when reading existing state fails", async () => {
     const writeCatalogueFiles = vi.fn();
+    const fetchBretsProducts = vi.fn();
 
     const result = await runScrape({
-      fetchBretsProducts: vi.fn().mockResolvedValue(bretsProducts),
-      fetchOffProducts: vi.fn().mockRejectedValue(new Error("HTTP 503")),
-      readPreviousCatalogue: vi.fn().mockReturnValue(null),
+      fetchBretsProducts,
+      readPreviousCatalogue: vi.fn().mockImplementation(() => {
+        throw new Error("EACCES");
+      }),
       readIdentityRegistry: vi.fn().mockReturnValue({}),
-      readOffMatchingTable: vi.fn().mockReturnValue({}),
       writeCatalogueFiles,
     });
 
-    expect(result.success).toBe(true);
-    expect(writeCatalogueFiles).toHaveBeenCalledTimes(1);
+    expect(result.success).toBe(false);
+    expect(fetchBretsProducts).not.toHaveBeenCalled();
+    expect(writeCatalogueFiles).not.toHaveBeenCalled();
+    if (!result.success) {
+      expect(result.error.join(" ")).toMatch(/EACCES/);
+    }
+  });
+
+  it("returns a failure (never throws) when the write to disk fails partway through", async () => {
+    const bretsProducts: BretsProduct[] = [
+      { bretsId: 1, slug: "curry-doux", name: "Curry Doux", image: "https://cms.brets.fr/curry.png" },
+    ];
+
+    const result = await runScrape({
+      fetchBretsProducts: vi.fn().mockResolvedValue(bretsProducts),
+      readPreviousCatalogue: vi.fn().mockReturnValue(null),
+      readIdentityRegistry: vi.fn().mockReturnValue({}),
+      writeCatalogueFiles: vi.fn().mockImplementation(() => {
+        throw new Error("ENOSPC");
+      }),
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.join(" ")).toMatch(/ENOSPC/);
+    }
   });
 
   it("counts archived flavors correctly in the summary", async () => {
@@ -103,10 +119,8 @@ describe("runScrape", () => {
 
     const result = await runScrape({
       fetchBretsProducts: vi.fn().mockResolvedValue(bretsProducts),
-      fetchOffProducts: vi.fn().mockResolvedValue([]),
       readPreviousCatalogue: vi.fn().mockReturnValue(previousCatalogue),
       readIdentityRegistry: vi.fn().mockReturnValue({ "1": "curry-doux" }),
-      readOffMatchingTable: vi.fn().mockReturnValue({}),
       writeCatalogueFiles,
     });
 

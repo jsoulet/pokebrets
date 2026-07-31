@@ -74,7 +74,7 @@ describe("fetchBretsProducts", () => {
     await expect(fetchBretsProducts()).rejects.toThrow(/brets\.fr/i);
   });
 
-  it("throws an exploitable error when a product is missing a packaging image", async () => {
+  it("falls back to a local placeholder image when a product has no packaging image, instead of failing the whole scrape", async () => {
     const raw = [
       {
         id: 1,
@@ -85,6 +85,29 @@ describe("fetchBretsProducts", () => {
     ];
     vi.mocked(fetch).mockResolvedValue(mockResponse(raw));
 
-    await expect(fetchBretsProducts()).rejects.toThrow(/sans-image/i);
+    const products = await fetchBretsProducts();
+
+    expect(products).toEqual([
+      { bretsId: 1, slug: "sans-image", name: "Sans Image", image: "/placeholder-flavor.svg" },
+    ]);
+  });
+
+  it("throws an exploitable error when a product has no rendered title", async () => {
+    const raw = [{ id: 1, slug: "sans-titre", title: {}, acf: { packaging: { url: "https://cms.brets.fr/a.png" } } }];
+    vi.mocked(fetch).mockResolvedValue(mockResponse(raw));
+
+    await expect(fetchBretsProducts()).rejects.toThrow(/sans-titre/i);
+  });
+
+  it("throws an exploitable error when X-WP-TotalPages is missing or invalid", async () => {
+    const raw = [{ id: 1, slug: "a", title: { rendered: "A" }, acf: { packaging: { url: "https://cms.brets.fr/a.png" } } }];
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: new Headers({ "x-wp-totalpages": "not-a-number" }),
+      json: async () => raw,
+    } as unknown as Response);
+
+    await expect(fetchBretsProducts()).rejects.toThrow(/pagination/i);
   });
 });

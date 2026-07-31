@@ -12,11 +12,13 @@ inputDocuments:
 
 # Story 1.9: Outil de scraping et mise à jour du Catalogue
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
 <!-- NOTE D'ORDONNANCEMENT : cette story est développée avant les stories 1.4 à 1.8 (hors ordre normal du sprint), à la demande explicite de l'utilisateur, afin de disposer d'un vrai `data/catalogue.json` avant de reprendre la story 1.3 (chargement du Catalogue). -->
+
+<!-- AMENDEMENT POST-REVUE (2026-07-31) : Open Food Facts a été retiré du scraper à la demande de l'utilisateur pendant la revue de code (cf. Review Findings et Change Log ci-dessous). La section "Story"/"Acceptance Criteria"/"Tasks" ci-dessous reste la trace historique de la spec d'origine (qui mentionne encore Open Food Facts) ; le comportement RÉEL et final est : brets.fr est l'unique source, et une image manquante utilise `public/placeholder-flavor.svg` au lieu d'un fallback OFF. -->
 
 ## Story
 
@@ -156,29 +158,38 @@ Claude Sonnet 5 (GitHub Copilot CLI)
 
 - `package.json` (modifié — ajout devDependency `tsx`, script npm `scrape`)
 - `package-lock.json` (modifié — installation de `tsx`)
-- `scripts/scrape-catalogue.ts` (nouveau — orchestrateur CLI)
+- `scripts/scrape-catalogue.ts` (nouveau — orchestrateur CLI, protégé par `try/catch` sur lecture d'état/écriture)
 - `scripts/scrape-catalogue.test.ts` (nouveau)
-- `scripts/html-entities.ts` (nouveau)
+- `scripts/html-entities.ts` (nouveau, corrigé en revue — `safeFromCodePoint`)
 - `scripts/html-entities.test.ts` (nouveau)
-- `scripts/sources/brets.ts` (nouveau)
+- `scripts/sources/brets.ts` (nouveau, corrigé en revue — placeholder image + validations défensives)
 - `scripts/sources/brets.test.ts` (nouveau)
-- `scripts/sources/off.ts` (nouveau)
-- `scripts/sources/off.test.ts` (nouveau)
-- `scripts/off-matching-table.json` (nouveau — `{}`)
-- `scripts/off-matching-table.README.md` (nouveau)
 - `scripts/identity-registry.ts` (nouveau)
 - `scripts/identity-registry.test.ts` (nouveau)
 - `scripts/identity-registry.json` (nouveau — registre réel, 60 entrées après Task 8)
-- `scripts/merge-catalogue.ts` (nouveau)
+- `scripts/merge-catalogue.ts` (nouveau, simplifié en revue — OFF retiré)
 - `scripts/merge-catalogue.test.ts` (nouveau)
 - `scripts/build-catalogue.ts` (nouveau)
 - `scripts/build-catalogue.test.ts` (nouveau)
-- `scripts/write-catalogue.ts` (nouveau)
+- `scripts/write-catalogue.ts` (nouveau, corrigé en revue — écriture atomique temp+rename)
 - `scripts/write-catalogue.test.ts` (nouveau)
-- `scripts/read-state.ts` (nouveau)
+- `scripts/read-state.ts` (nouveau, simplifié en revue — OFF retiré)
 - `scripts/read-state.test.ts` (nouveau)
-- `data/catalogue.json` (nouveau — premier Catalogue réel, 60 Saveurs actives)
+- `public/placeholder-flavor.svg` (nouveau — image de repli quand brets.fr n'a pas de visuel, ajouté en revue)
+- `data/catalogue.json` (nouveau — premier Catalogue réel, 60 Saveurs actives, régénéré après la revue)
+- ~~`scripts/sources/off.ts`, `scripts/sources/off.test.ts`, `scripts/off-matching-table.json`, `scripts/off-matching-table.README.md`~~ (supprimés en revue de code — Open Food Facts retiré du scraper, cf. Review Findings)
+
+### Review Findings
+
+- [x] [Review][Decision] Fichiers d'état existants corrompus traités silencieusement comme absents — `readPreviousCatalogue()`/`readIdentityRegistry()` (`scripts/read-state.ts`) retournent `null`/`{}` dès que `data/catalogue.json` ou `scripts/identity-registry.json` existent mais échouent au parsing/validation, sans distinguer "fichier absent" de "fichier présent mais corrompu". — **Résolu (dismiss) : comportement conservé volontairement tel quel, décision explicite de l'utilisateur (2026-07-31).**
+- [x] [Review][Decision] Le fallback OFF pour l'image est structurellement inatteignable — `scripts/sources/brets.ts` lève une exception dès que `acf.packaging.url` est absent, alors que Subtask 5.1/`merge-catalogue.ts` documente et code un chemin "OFF complète un champ manquant de brets.fr" pour l'image. — **Résolu (patch étendu) : Open Food Facts retiré entièrement du scraper (`scripts/sources/off.ts`, `scripts/off-matching-table.*` supprimés, `merge-catalogue.ts`/`scrape-catalogue.ts`/`read-state.ts` simplifiés) ; une image brets.fr manquante utilise désormais un placeholder local (`public/placeholder-flavor.svg`) au lieu de faire échouer le scrape. Changement de portée décidé par l'utilisateur pendant la revue de code (2026-07-31) — voir Change Log.**
+- [x] [Review][Patch] Écriture non atomique et non transactionnelle sur deux fichiers [scripts/write-catalogue.ts] — **Corrigé : écriture sur fichiers temporaires (`.tmp-<pid>-<ts>`) puis `renameSync` atomique vers les fichiers finaux, dans l'ordre catalogue.json puis registre ; aucun renommage si une écriture temporaire échoue.**
+- [x] [Review][Patch] Erreurs I/O non catchées ressortent en stacktrace brut [scripts/scrape-catalogue.ts] — **Corrigé : lecture d'état existant, fetch brets.fr, et écriture disque sont chacun protégés par `try/catch` dans `runScrape()`, retournant un résultat `{success:false, error}` exploitable ; `main()` a également un filet de sécurité `try/catch` en dernier recours.**
+- [x] [Review][Patch] `decodeHtmlEntities` peut lever un `RangeError` non catché [scripts/html-entities.ts] — **Corrigé : un point de code invalide est désormais intercepté (`safeFromCodePoint`) et l'entité brute est préservée plutôt que de faire planter le scrape.**
+- [x] [Review][Patch] Absence de validation défensive de la forme des réponses API [scripts/sources/brets.ts] — **Corrigé : `title.rendered` et `X-WP-TotalPages` sont désormais validés explicitement avec un message d'erreur exploitable et spécifique à brets.fr (le client Open Food Facts a été retiré, cf. décision ci-dessus).**
+- [x] [Review][Defer] Pas de verrouillage/CAS pour des exécutions concurrentes de `npm run scrape` — deferred, pre-existing : outil manuel mono-utilisateur (pas de cron, cf. Dev Notes AD-6), risque de concurrence non pertinent pour ce contexte d'usage.
 
 ## Change Log
 
 - 2026-07-31 : Implémentation complète de la story 1.9 (scraper CLI brets.fr + Open Food Facts, registre d'identité, fusion/archivage, validation stricte, écriture atomique). 51 nouveaux tests, 78/78 passants au total, build et lint clean. Exécution réelle effectuée (Task 8) : premier `data/catalogue.json` généré et committé (60 Saveurs actives). Correction de robustesse découverte en conditions réelles : indisponibilité d'Open Food Facts (HTTP 503) rendue non bloquante (AD-5 : complément uniquement). Statut → `review`.
+- 2026-07-31 : Revue de code — 6 findings traités (2 decision, 4 patch, 1 defer, 4 dismiss). **Changement de portée décidé par l'utilisateur pendant la revue** : Open Food Facts retiré entièrement du scraper (plus de source complémentaire — brets.fr est désormais la seule source) ; une image brets.fr manquante utilise un placeholder local (`public/placeholder-flavor.svg`) au lieu de faire échouer le scrape. Écriture disque rendue réellement atomique (fichiers temporaires + `renameSync`). Toutes les erreurs I/O (lecture d'état existant, écriture) sont désormais capturées et retournées comme résultat exploitable, jamais un throw brut. `decodeHtmlEntities` ne peut plus lever de `RangeError` non catché. Validation défensive ajoutée sur les réponses brets.fr (`title.rendered`, `X-WP-TotalPages`). Catalogue réel régénéré après ces changements (toujours 60 Saveurs actives). 73/73 tests passants, build et lint clean.

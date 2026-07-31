@@ -5,7 +5,6 @@ import { parseCatalogue, type Catalogue } from "../lib/schema";
 const PROJECT_ROOT = join(__dirname, "..");
 const CATALOGUE_PATH = join(PROJECT_ROOT, "data", "catalogue.json");
 const REGISTRY_PATH = join(PROJECT_ROOT, "scripts", "identity-registry.json");
-const OFF_MATCHING_TABLE_PATH = join(PROJECT_ROOT, "scripts", "off-matching-table.json");
 
 function readJsonFile(path: string): unknown | null {
   if (!existsSync(path)) {
@@ -36,12 +35,6 @@ export function readPreviousCatalogue(): Catalogue | null {
 
 export function readIdentityRegistry(): Record<string, string> {
   const raw = readJsonFile(REGISTRY_PATH);
-
-  return (raw as Record<string, string> | null) ?? {};
-}
-
-export function readOffMatchingTable(): Record<string, string> {
-  const raw = readJsonFile(OFF_MATCHING_TABLE_PATH);
 
   return (raw as Record<string, string> | null) ?? {};
 }

@@ -11,8 +11,6 @@ describe("mergeSources", () => {
 
     const { flavors, registry } = mergeSources({
       bretsProducts,
-      offMatchingTable: {},
-      offProducts: [],
       previousCatalogue: null,
       registry: {},
     });
@@ -30,8 +28,6 @@ describe("mergeSources", () => {
 
     const { flavors } = mergeSources({
       bretsProducts,
-      offMatchingTable: {},
-      offProducts: [],
       previousCatalogue: null,
       registry: { "1": "curry-doux" },
     });
@@ -54,8 +50,6 @@ describe("mergeSources", () => {
 
     const { flavors } = mergeSources({
       bretsProducts,
-      offMatchingTable: {},
-      offProducts: [],
       previousCatalogue,
       registry: { "1": "curry-doux" },
     });
@@ -83,8 +77,6 @@ describe("mergeSources", () => {
 
     const { flavors } = mergeSources({
       bretsProducts,
-      offMatchingTable: {},
-      offProducts: [],
       previousCatalogue,
       registry: { "1": "curry-doux" },
     });
@@ -92,23 +84,5 @@ describe("mergeSources", () => {
     expect(flavors).toEqual([
       { id: "curry-doux", name: "Curry Doux", image: "https://cms.brets.fr/curry-new.png", status: "active" },
     ]);
-  });
-
-  it("does not consult Open Food Facts for a flavor with complete brets.fr data", () => {
-    const bretsProducts: BretsProduct[] = [
-      { bretsId: 1, slug: "curry-doux", name: "Curry Doux", image: "https://cms.brets.fr/curry.png" },
-    ];
-
-    const { flavors } = mergeSources({
-      bretsProducts,
-      offMatchingTable: { "1": "some-off-code" },
-      offProducts: [{ code: "some-off-code", name: "OFF Name", image: "https://off/img.jpg" }],
-      previousCatalogue: null,
-      registry: {},
-    });
-
-    // brets.fr fournit déjà nom + image : OFF ne doit jamais les remplacer.
-    expect(flavors[0].name).toBe("Curry Doux");
-    expect(flavors[0].image).toBe("https://cms.brets.fr/curry.png");
   });
 });

@@ -26,6 +26,11 @@ export interface BretsProduct {
   image: string;
 }
 
+// Servi par l'app elle-même (public/placeholder-flavor.svg) quand brets.fr
+// ne fournit pas de visuel de packaging — évite qu'un produit sans image
+// ne fasse échouer tout le scrape (voir revue de code story 1.9).
+const PLACEHOLDER_IMAGE = "/placeholder-flavor.svg";
+
 async function fetchPage(page: number): Promise<{ products: BretsRawProduct[]; totalPages: number }> {
   const url = `${BRETS_API_BASE}?per_page=${PER_PAGE}&page=${page}&_fields=id,slug,title,link,acf`;
   const response = await fetch(url);
@@ -37,25 +42,28 @@ async function fetchPage(page: number): Promise<{ products: BretsRawProduct[]; t
   }
 
   const products = (await response.json()) as BretsRawProduct[];
-  const totalPages = Number.parseInt(response.headers.get("x-wp-totalpages") ?? "1", 10);
+  const totalPagesHeader = response.headers.get("x-wp-totalpages");
+  const totalPages = Number.parseInt(totalPagesHeader ?? "1", 10);
 
-  return { products, totalPages: Number.isNaN(totalPages) ? 1 : totalPages };
+  if (!Number.isInteger(totalPages) || totalPages < 1) {
+    throw new Error(
+      `Pagination brets.fr invalide (page ${page}) : en-tête X-WP-TotalPages="${totalPagesHeader}" inexploitable`,
+    );
+  }
+
+  return { products, totalPages };
 }
 
 function normalize(raw: BretsRawProduct): BretsProduct {
-  const image = raw.acf?.packaging?.url;
-
-  if (!image) {
-    throw new Error(
-      `Produit brets.fr "${raw.slug}" (id ${raw.id}) sans image de packaging exploitable (acf.packaging.url manquant)`,
-    );
+  if (typeof raw.title?.rendered !== "string" || raw.title.rendered.length === 0) {
+    throw new Error(`Produit brets.fr "${raw.slug}" (id ${raw.id}) sans titre exploitable`);
   }
 
   return {
     bretsId: raw.id,
     slug: raw.slug,
     name: decodeHtmlEntities(raw.title.rendered),
-    image,
+    image: raw.acf?.packaging?.url ?? PLACEHOLDER_IMAGE,
   };
 }
 

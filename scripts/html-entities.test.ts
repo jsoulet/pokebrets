@@ -29,4 +29,9 @@ describe("decodeHtmlEntities", () => {
   it("returns an empty string for an empty input", () => {
     expect(decodeHtmlEntities("")).toBe("");
   });
+
+  it("leaves an invalid numeric entity unchanged instead of throwing", () => {
+    expect(() => decodeHtmlEntities("&#99999999;")).not.toThrow();
+    expect(decodeHtmlEntities("Avant &#99999999; Après")).toBe("Avant &#99999999; Après");
+  });
 });

@@ -68,25 +68,3 @@ describe("readIdentityRegistry", () => {
     expect(readIdentityRegistry()).toEqual({ "1": "curry-doux" });
   });
 });
-
-describe("readOffMatchingTable", () => {
-  beforeEach(() => {
-    existsSyncMock.mockReset();
-    readFileSyncMock.mockReset();
-  });
-
-  it("returns an empty table when the file does not exist", async () => {
-    const { readOffMatchingTable } = await import("./read-state");
-    existsSyncMock.mockReturnValue(false);
-
-    expect(readOffMatchingTable()).toEqual({});
-  });
-
-  it("returns the parsed matching table when the file exists", async () => {
-    const { readOffMatchingTable } = await import("./read-state");
-    existsSyncMock.mockReturnValue(true);
-    readFileSyncMock.mockReturnValue(JSON.stringify({ "8776": "3497917000907" }));
-
-    expect(readOffMatchingTable()).toEqual({ "8776": "3497917000907" });
-  });
-});

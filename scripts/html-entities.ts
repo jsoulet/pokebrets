@@ -26,13 +26,25 @@ const NAMED_ENTITIES: Record<string, string> = {
 export function decodeHtmlEntities(input: string): string {
   return input.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|[a-zA-Z]+);/g, (match, entity: string) => {
     if (entity.startsWith("#x") || entity.startsWith("#X")) {
-      return String.fromCodePoint(Number.parseInt(entity.slice(2), 16));
+      return safeFromCodePoint(Number.parseInt(entity.slice(2), 16), match);
     }
 
     if (entity.startsWith("#")) {
-      return String.fromCodePoint(Number.parseInt(entity.slice(1), 10));
+      return safeFromCodePoint(Number.parseInt(entity.slice(1), 10), match);
     }
 
     return NAMED_ENTITIES[entity] ?? match;
   });
+}
+
+// Un point de code hors plage Unicode valide (ex: `&#99999999;`, dérive
+// possible côté brets.fr) ne doit jamais faire planter tout le scrape —
+// on préserve l'entité brute plutôt que de laisser `String.fromCodePoint`
+// lever un `RangeError` non catché (cf. revue de code story 1.9).
+function safeFromCodePoint(codePoint: number, fallback: string): string {
+  try {
+    return String.fromCodePoint(codePoint);
+  } catch {
+    return fallback;
+  }
 }
