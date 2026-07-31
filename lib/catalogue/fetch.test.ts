@@ -24,8 +24,21 @@ describe("fetchCatalogue", () => {
 
     const result = await fetchCatalogue();
 
-    expect(fetch).toHaveBeenCalledWith(CATALOGUE_URL);
+    expect(fetch).toHaveBeenCalledWith(CATALOGUE_URL, expect.objectContaining({ signal: expect.anything() }));
     expect(result).toEqual({ success: true, data: validCatalogue });
+  });
+
+  it("[Review] passes an AbortSignal with a timeout so a hung request never blocks forever", async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => validCatalogue,
+    } as unknown as Response);
+
+    await fetchCatalogue();
+
+    const [, options] = vi.mocked(fetch).mock.calls[0];
+    expect(options?.signal).toBeInstanceOf(AbortSignal);
   });
 
   it("returns a failure result (never throws) on a non-2xx response", async () => {

@@ -1,3 +1,9 @@
+"use client";
+
+// [Review] Défense en profondeur AD-4 : ce module touche `localStorage`
+// directement. `index.ts` (qui l'importe) porte déjà `'use client'`, mais un
+// import direct futur de ce fichier hors de `lib/catalogue/` doit lui aussi
+// échouer explicitement à la compilation plutôt qu'à l'exécution.
 import { parseCatalogue, type Catalogue } from "../schema";
 
 // Namespace dédié pour éviter toute collision future avec la clé de

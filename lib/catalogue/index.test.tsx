@@ -167,6 +167,36 @@ describe("useCatalogue", () => {
     expect(JSON.parse(localStorage.getItem(CATALOGUE_CACHE_KEY) as string)).toEqual(newerCatalogue);
   });
 
+  it("[Review] Subtask 4.3/AC #4: an equal instant serialized differently (with vs without milliseconds) is not treated as newer", async () => {
+    // Same instant as `newerCatalogue.generatedAt`, but serialized without
+    // milliseconds — a raw string comparison would treat this as different
+    // (and potentially "older" or "newer" depending on lexical order), while
+    // a timestamp comparison correctly recognizes it as the same instant.
+    const sameInstantDifferentSerialization = {
+      ...newerCatalogue,
+      generatedAt: "2026-07-31T00:00:00Z",
+    };
+    mockFetchOnce({ ok: true, json: async () => newerCatalogue });
+
+    const { result } = renderHook(() => useCatalogue());
+
+    await waitFor(() => expect(result.current.data).toEqual(newerCatalogue));
+
+    mockFetchOnce({ ok: true, json: async () => sameInstantDifferentSerialization });
+    act(() => {
+      result.current.retry();
+    });
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    // Not strictly newer (same instant) -> silently ignored, no regression,
+    // no crash, cache stays on the original serialization.
+    expect(result.current.data).toEqual(newerCatalogue);
+    expect(JSON.parse(localStorage.getItem(CATALOGUE_CACHE_KEY) as string)).toEqual(newerCatalogue);
+  });
+
   it("Subtask 5.7: corrupted local cache (invalid JSON) is treated as no cache, never crashes", async () => {
     localStorage.setItem(CATALOGUE_CACHE_KEY, "{ not valid json");
     mockFetchOnce({ ok: true, json: async () => newerCatalogue });
@@ -206,5 +236,26 @@ describe("useCatalogue", () => {
     await waitFor(() => expect(result.current.status).toBe("ready"));
     expect(result.current.data).toEqual(newerCatalogue);
     expect(result.current.error).toBeNull();
+  });
+
+  it("[Review] never updates state after the component unmounts (no orphaned setState)", async () => {
+    let resolveFetch!: (value: unknown) => void;
+    vi.mocked(fetch).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveFetch = resolve;
+      }) as Promise<Response>,
+    );
+
+    const { unmount } = renderHook(() => useCatalogue());
+
+    unmount();
+
+    // The fetch resolves only after the component is gone — this must not
+    // throw the "state update on an unmounted component" React warning nor
+    // crash, thanks to the isMountedRef guard.
+    await act(async () => {
+      resolveFetch({ ok: true, status: 200, json: async () => newerCatalogue });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
   });
 });

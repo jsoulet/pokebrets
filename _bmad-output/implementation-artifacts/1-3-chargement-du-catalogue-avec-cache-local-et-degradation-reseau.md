@@ -12,7 +12,7 @@ inputDocuments:
 
 # Story 1.3: Chargement du Catalogue avec cache local et dégradation réseau
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -144,3 +144,20 @@ Claude Sonnet 5 (GitHub Copilot CLI)
 ## Change Log
 
 - 2026-07-31 : Implémentation initiale de `lib/catalogue/` (cache local, fetch réseau, hook `useCatalogue()` avec stale-while-revalidate). 24 tests ajoutés, 97/97 tests passants au total, `build`/`lint` propres. Status → `review`.
+- 2026-07-31 : Corrections issues de la revue de code — comparaison de fraîcheur par timestamp (`Date.parse`) au lieu de string brute, timeout réseau (10s) sur `fetchCatalogue`, `'use client'` explicite sur `cache.ts`, garde anti-setState-après-démontage. 3 tests de régression ajoutés (100/100 au total). Status → `done`.
+
+### Review Findings
+
+- [x] [Review][Patch] Comparaison de `generatedAt` en string brute au lieu d'un timestamp — `z.iso.datetime()` accepte plusieurs sérialisations valides du même instant (avec/sans millisecondes, offset), la comparaison `<=` sur strings peut inverser l'ordre de fraîcheur. [lib/catalogue/index.ts:53] — corrigé : comparaison via `Date.parse()`, test de régression ajouté (instant identique, sérialisations différentes).
+- [x] [Review][Patch] `fetchCatalogue()` n'a aucun timeout — un `fetch` qui ne répond jamais (réseau capricieux en rayon, cas d'usage réel de la story) laisse le hook bloqué indéfiniment en `loading` ou en revalidation silencieuse. [lib/catalogue/fetch.ts:15] — corrigé : `AbortSignal.timeout(10_000)` sur la requête, test ajouté.
+- [x] [Review][Patch] `lib/catalogue/cache.ts` touche `localStorage` sans porter `'use client'` explicitement — défense en profondeur AD-4 (le hook `index.ts` le porte déjà et l'isole en pratique, mais un import direct futur de `cache.ts` échouerait silencieusement à la compilation puis crasherait à l'exécution). [lib/catalogue/cache.ts:1] — corrigé : directive ajoutée.
+- [x] [Review][Patch] Aucune protection contre un `setState` après démontage du composant : si le composant utilisant `useCatalogue()` se démonte avant la résolution du fetch, la promesse résout quand même et met à jour un state orphelin. [lib/catalogue/index.ts:38-60] — corrigé : garde `isMountedRef`, test ajouté (fetch résolu après `unmount()`).
+- [x] [Review][Defer] Chaque instance de `useCatalogue()` déclenche son propre fetch, sans déduplication ni synchronisation inter-onglets — pertinent seulement une fois le hook réellement consommé par plusieurs composants (story 1.4+). [lib/catalogue/index.ts] — deferred, pre-existing (aucun consommateur du hook n'existe encore dans cette story)
+- [x] [Review][Dismiss] URL `raw.githubusercontent.com` codée en dur, contourne le pipeline PWA/CSP de l'app — conforme à AC #5/AD-2, décision d'architecture déjà actée, pas un bug.
+- [x] [Review][Dismiss] `readCache()` ne supprime pas une entrée corrompue de `localStorage` — s'auto-corrige dès la prochaine écriture réussie (`writeCache` écrase toujours l'entrée existante), pas de risque réel de blocage.
+- [x] [Review][Dismiss] `writeCache()` avale silencieusement les échecs d'écriture sans signal à l'appelant — dégradation silencieuse explicitement voulue par le Subtask 2.3.
+- [x] [Review][Dismiss] Message d'erreur générique masquant la cause réelle (404 vs réseau vs schéma) — le texte exact est imposé par AC #2, conforme au spec.
+- [x] [Review][Dismiss] `retry()` ne bascule jamais vers un état "en cours de nouvelle tentative" — comportement explicitement prescrit par le Subtask 4.5 (ne jamais repasser à `loading` si des données sont déjà affichées).
+- [x] [Review][Dismiss] `readCache`/`writeCache`/`fetchCatalogue` exportés, donc potentiellement important-ables hors de `index.ts` malgré AC #6 — export nécessaire pour la testabilité unitaire (`cache.test.ts`/`fetch.test.ts` en dépendent) ; la propriété exclusive de la fraîcheur reste une convention documentée en commentaire, cohérente avec le reste du projet (pas d'outillage de frontière de module ailleurs dans le repo).
+- [x] [Review][Dismiss] Absence de test unitaire dédié au hook pour le cas "JSON valide mais hors schéma" en échec de revalidation — déjà couvert au niveau `fetch.test.ts`, et le hook ne distingue jamais la cause de l'échec (branche unique `!result.success`), donc un test additionnel serait redondant.
+
