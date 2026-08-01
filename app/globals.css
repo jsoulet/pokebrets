@@ -47,6 +47,7 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
   --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
   --color-archived: var(--archived);
 }
 
@@ -77,6 +78,7 @@
      tricolore" rejeté, cf. DESIGN.md), ces couleurs ne servent qu'aux
      petits badges/accents ponctuels. */
   --success: #3fa34d;
+  --success-foreground: oklch(0.985 0 0);
   --archived: #c9c2b4;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
