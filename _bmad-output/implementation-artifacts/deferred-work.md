@@ -17,3 +17,7 @@
 
 - Le bouton "Réessayer" (`catalogue-page-client.tsx`) ne montre aucun état "en cours" pendant `retry()` : `useCatalogue()` (Story 1.3) n'expose que `loading`/`ready`/`error`, pas de statut intermédiaire type `retrying`. Nécessite une évolution du contrat du hook — hors scope pour un composant de présentation pur (Story 1.4).
 - Pas d'état vide dédié si `data.flavors` est un tableau vide (catalogue scrappé sans résultat) : la grille afficherait un espace blanc sans message. Scénario peu probable (Story 1.9 garantit un catalogue non vide via `data/catalogue.json`) mais non couvert par un test ou un message dédié.
+
+## Deferred from: code review of story-1-5 (2026-08-01)
+
+- `useTasted()` (`lib/tasted/index.ts`) n'écoute pas l'évènement navigateur `storage` : un second onglet ouvert sur le même appareil ne reflète pas en direct un toggle effectué dans un autre onglet, tant qu'il n'est pas remonté/rechargé. La fonction canonique `setTasted()` protège déjà contre l'écrasement d'une écriture concurrente (relecture avant écriture, AD-8) mais ne synchronise pas la vue React d'un onglet resté ouvert. Pertinent seulement en usage multi-onglets simultané, hors scope de l'usage mono-utilisateur/mono-appareil au premier plan visé par cette story.

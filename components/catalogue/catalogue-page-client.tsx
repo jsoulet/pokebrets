@@ -49,10 +49,9 @@ export function CataloguePageClient() {
 
   function handleToggleFlavor(id: string) {
     const flavor = flavors.find((candidate) => candidate.id === id);
-    toggleTasted(id);
+    const nextIsTasted = toggleTasted(id);
 
     if (flavor) {
-      const nextIsTasted = !tastedIds.has(id);
       setAnnouncement(`${flavor.name}, ${nextIsTasted ? "goûtée" : "pas goûtée"}`);
     }
   }

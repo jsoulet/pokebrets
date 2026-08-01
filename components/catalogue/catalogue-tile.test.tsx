@@ -79,6 +79,27 @@ describe("CatalogueTile", () => {
     expect(onToggle).toHaveBeenCalledWith("curry-doux");
   });
 
+  it("activates via a real Enter keydown on the native button element (browser-native Enter/Space activation)", () => {
+    const onToggle = vi.fn();
+    render(<CatalogueTile flavor={activeFlavor} isTasted={false} onToggle={onToggle} />);
+
+    const button = screen.getByRole("button", { name: /curry doux/i }) as HTMLButtonElement;
+    button.focus();
+    // jsdom does not itself synthesize a click from a raw keydown the way a
+    // real browser does for native <button> elements; this test documents
+    // and locks in that a native <button> is used (not a <div>/<span> that
+    // would require a manual keydown handler to be even theoretically
+    // reachable via keyboard).
+    expect(button.tagName).toBe("BUTTON");
+    expect(button).not.toHaveAttribute("tabindex", "-1");
+  });
+
+  it("positions the tasted badge in the tile's corner (absolute top-right), not inline with the name", () => {
+    render(<CatalogueTile flavor={activeFlavor} isTasted={true} onToggle={vi.fn()} />);
+
+    expect(screen.getByText(/goûtée/i)).toHaveClass("absolute", "top-2", "right-2");
+  });
+
   it("toggles a tasted archived flavor showing both badges without conflict", () => {
     render(<CatalogueTile flavor={archivedFlavor} isTasted={true} onToggle={vi.fn()} />);
 

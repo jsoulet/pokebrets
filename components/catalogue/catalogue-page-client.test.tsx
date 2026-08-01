@@ -97,7 +97,7 @@ describe("CataloguePageClient", () => {
     expect(screen.getByText("1/2 saveurs goûtées")).toBeInTheDocument();
   });
 
-  it("does not show the progress counter while loading or on error", () => {
+  it("does not show the progress counter while loading", () => {
     mockedUseCatalogue.mockReturnValue({ data: null, status: "loading", error: null, retry: vi.fn() });
 
     render(<CataloguePageClient />);
@@ -105,8 +105,37 @@ describe("CataloguePageClient", () => {
     expect(screen.queryByText(/saveurs goûtées/i)).not.toBeInTheDocument();
   });
 
+  it("does not show the progress counter on error", () => {
+    mockedUseCatalogue.mockReturnValue({
+      data: null,
+      status: "error",
+      error: "Impossible de charger le catalogue, vérifie ta connexion",
+      retry: vi.fn(),
+    });
+
+    render(<CataloguePageClient />);
+
+    expect(screen.queryByText(/saveurs goûtées/i)).not.toBeInTheDocument();
+  });
+
+  it("never inflates the counter with persisted ids that no longer exist in the current catalogue (orphan ids)", () => {
+    mockedUseCatalogue.mockReturnValue({ data: catalogue, status: "ready", error: null, retry: vi.fn() });
+    // tastedCount (raw hook count) intentionally diverges from tastedIds to
+    // prove the page joins against `data.flavors` by id rather than trusting
+    // the hook's own count, which could include ids for flavors removed from
+    // a since-updated catalogue.
+    mockUseTasted({
+      tastedIds: new Set(["curry-doux", "orphan-flavor-no-longer-in-catalogue"]),
+      tastedCount: 2,
+    });
+
+    render(<CataloguePageClient />);
+
+    expect(screen.getByText("1/2 saveurs goûtées")).toBeInTheDocument();
+  });
+
   it("toggles a flavor via the grid and announces the state change for screen readers", () => {
-    const toggleTasted = vi.fn();
+    const toggleTasted = vi.fn().mockReturnValue(true);
     mockedUseCatalogue.mockReturnValue({ data: catalogue, status: "ready", error: null, retry: vi.fn() });
     mockUseTasted({ toggleTasted });
 
@@ -117,9 +146,46 @@ describe("CataloguePageClient", () => {
     expect(toggleTasted).toHaveBeenCalledWith("curry-doux");
   });
 
-  it("renders a polite live region for the tasted-state announcement, updated after toggling", () => {
+  it('renders a polite live region announcing "goûtée" when toggleTasted resolves to tasted', () => {
     mockedUseCatalogue.mockReturnValue({ data: catalogue, status: "ready", error: null, retry: vi.fn() });
-    mockUseTasted();
+    mockUseTasted({ toggleTasted: vi.fn().mockReturnValue(true) });
+
+    render(<CataloguePageClient />);
+
+    fireEvent.click(screen.getByRole("button", { name: /curry doux/i }));
+
+    const liveRegion = screen.getByText("Curry Doux, goûtée");
+    expect(liveRegion).toBeInTheDocument();
+    expect(liveRegion).toHaveAttribute("aria-live", "polite");
+  });
+
+  it('renders a polite live region announcing "pas goûtée" when toggleTasted resolves to un-tasted', () => {
+    mockedUseCatalogue.mockReturnValue({ data: catalogue, status: "ready", error: null, retry: vi.fn() });
+    mockUseTasted({ toggleTasted: vi.fn().mockReturnValue(false) });
+
+    render(<CataloguePageClient />);
+
+    fireEvent.click(screen.getByRole("button", { name: /curry doux/i }));
+
+    const liveRegion = screen.getByText("Curry Doux, pas goûtée");
+    expect(liveRegion).toBeInTheDocument();
+    expect(liveRegion).toHaveAttribute("aria-live", "polite");
+  });
+
+  it("bases the announcement on toggleTasted's returned next state, not on the pre-click tastedIds snapshot", () => {
+    // Regression test: the announcement must never be derived by
+    // re-deriving `!tastedIds.has(id)` from the hook's render-time snapshot,
+    // since that snapshot can be stale on rapid repeated toggles. It must
+    // use the boolean returned synchronously by toggleTasted() itself.
+    mockedUseCatalogue.mockReturnValue({ data: catalogue, status: "ready", error: null, retry: vi.fn() });
+    // tastedIds already contains curry-doux (as if a stale/prior render),
+    // yet toggleTasted() authoritatively resolves to "tasted" (true) for
+    // this call — the announcement must follow the return value, not flip
+    // the opposite way by re-reading tastedIds.
+    mockUseTasted({
+      tastedIds: new Set(["curry-doux"]),
+      toggleTasted: vi.fn().mockReturnValue(true),
+    });
 
     render(<CataloguePageClient />);
 

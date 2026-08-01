@@ -19,7 +19,7 @@ describe("CatalogueGrid", () => {
   it("renders the exact number of tiles as flavors, regardless of dataset size", () => {
     render(<CatalogueGrid flavors={flavors} tastedIds={new Set()} onToggleFlavor={vi.fn()} />);
 
-    expect(screen.getAllByRole("img")).toHaveLength(flavors.length);
+    expect(screen.getAllByRole("listitem")).toHaveLength(flavors.length);
   });
 
   it("marks tiles as tasted purely from the tastedIds set, without owning any storage logic", () => {

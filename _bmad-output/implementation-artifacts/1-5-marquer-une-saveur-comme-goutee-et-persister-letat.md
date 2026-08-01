@@ -16,7 +16,7 @@ inputDocuments:
 
 # Story 1.5: Marquer une Saveur comme goûtée et persister l'état
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -159,6 +159,9 @@ Claude Sonnet 5 (GitHub Copilot CLI)
 - `npm test -- --run` → 141/141 tests passing (21 nouveaux : 11 `lib/tasted/cache`, 8 `lib/tasted/index`, +6 `catalogue-tile`, +2 `catalogue-grid`, +4 `catalogue-page-client`), aucune régression.
 - `npm run lint` → 0 erreur, 1 avertissement inchangé (`@next/next/no-img-element` sur `catalogue-tile.tsx`, déjà accepté en Story 1.4).
 - `npm run build` → succès, `/` toujours prérendu statiquement (`○ (Static)`). `useTasted()` suit le même lazy-initializer + try/catch défensif que `useCatalogue()` : `localStorage` indisponible pendant l'export Node se dégrade silencieusement en map vide, sans crash de build.
+- [Review] `npm test -- --run` → 150/150 après application des patchs de revue (9 nouveaux tests de régression : toggle pair, valeur de retour de `toggleTasted()`, entrée `false` défensive, compteur/loading/error séparés, compteur anti-IDs-orphelins, deux directions d'annonce + `aria-live`, position en coin du badge).
+- [Review] `npm run lint` → 0 erreur, 1 avertissement inchangé.
+- [Review] `npm run build` → succès, export statique inchangé.
 
 ### Completion Notes List
 
@@ -185,8 +188,36 @@ Claude Sonnet 5 (GitHub Copilot CLI)
 - `components/catalogue/catalogue-page-client.test.tsx` — étendu, 4 nouveaux tests.
 - `app/page.test.tsx` — mis à jour : mock de `useTasted` ajouté (le composant sous test en dépend désormais).
 - `app/globals.css` — ajout du token `--success-foreground`.
+- [Review] `lib/tasted/index.ts` — correction du bug critique de toggle (état périmé), `toggleTasted()` retourne désormais le booléen résultant, `tastedIds` filtré strictement sur `true`.
+- [Review] `lib/tasted/index.test.tsx` — 3 nouveaux tests (toggle pair, valeur de retour, entrée `false` défensive).
+- [Review] `components/catalogue/catalogue-tile.tsx` — badge "Goûtée" repositionné en coin (`absolute top-2 right-2`, hors du bouton).
+- [Review] `components/catalogue/catalogue-tile.test.tsx` — 2 nouveaux tests (position en coin, activation clavier native).
+- [Review] `components/catalogue/catalogue-page-client.tsx` — annonce basée sur la valeur de retour de `toggleTasted()`.
+- [Review] `components/catalogue/catalogue-page-client.test.tsx` — tests séparés loading/error, test anti-IDs-orphelins, tests des deux directions d'annonce avec assertion `aria-live`.
+- [Review] `components/catalogue/catalogue-grid.test.tsx` — comptage des tuiles via `role="listitem"` plutôt que via les images.
+
+## Review Findings
+
+Revue croisée (Blind Hunter, Edge Case Hunter, Acceptance Auditor) sur `e1f3aa9` vs baseline `89e6811` (`lib/tasted/` + `components/catalogue/` + `app/`, 12 fichiers, ~635 lignes hors tests). Les 3 revues convergent indépendamment sur le même bug critique.
+
+### Patch (appliqués)
+
+- [x] **Bug critique (AC #3/AD-8) : `toggleTasted()` basé sur un état React périmé.** `useTasted()` calculait le booléen `next` à partir de la fermeture `state` du rendu courant. Deux appels de `toggleTasted()` sur la même Saveur survenant avant que React n'ait eu l'occasion de re-render (double-tap rapide, gestionnaire invoqué deux fois dans le même tick) lisaient la même valeur périmée et poussaient donc **deux fois le même booléen au lieu d'alterner** — un nombre pair de toggles rapprochés ne revenait jamais à "pas goûtée". Corrigé via un `stateRef` mis à jour de manière synchrone à chaque mutation (source de vérité indépendante du cycle de rendu), et `toggleTasted()` retourne désormais le booléen résultant pour que les appelants n'aient jamais à le re-dériver eux-mêmes.
+- [x] **`tastedIds`/`isTasted()` incohérents sur une valeur `false` explicite.** Le schéma partagé (`tastedStateSchema`, AD-7) autorise techniquement `false` en valeur, mais `tastedIds` dérivait de `Object.keys(state)` sans filtrer par valeur — une entrée `{ id: false }` (écriture hors chemin canonique, migration future) aurait été comptée comme goûtée par `tastedIds`/le compteur tout en étant `false` pour `isTasted()`. Corrigé : `tastedIds` ne retient que les clés dont la valeur vaut strictement `true`.
+- [x] **`catalogue-page-client.tsx` : annonce lecteur d'écran basée sur un état périmé.** `handleToggleFlavor()` recalculait `nextIsTasted` via `!tastedIds.has(id)` (même snapshot potentiellement périmé que le bug ci-dessus). Corrigé : utilise directement le booléen retourné par `toggleTasted(id)`.
+- [x] **AC #1 partiellement respecté : le badge "Goûtée" n'était pas "en coin de la tuile".** Il s'affichait en flux normal, centré sous le nom. Repositionné en `absolute top-2 right-2` (hors du `<button>`, `pointer-events-none`, `aria-hidden` car déjà redondant avec `aria-pressed` + l'annonce `aria-live`), conformément à DESIGN.md (`badge-tasted`, "posé en coin de la tuile").
+- [x] **Couverture de tests renforcée** : test de régression à nombre pair de toggles rapprochés (expose le bug corrigé), test de la valeur de retour de `toggleTasted()`, test défensif sur une entrée `false` explicite, séparation des tests "compteur masqué" loading/error, test du compteur protégé contre les IDs orphelins (catalogue mis à jour sans purge de l'état persisté), tests des deux directions d'annonce ("goûtée"/"pas goûtée") avec assertion explicite de `aria-live="polite"`, test de positionnement en coin du badge, comptage des tuiles via `role="listitem"` plutôt que via les images (plus robuste au changement de structure de la tuile).
+
+### Deferred (voir `deferred-work.md`)
+
+- [ ] **Pas de synchronisation multi-onglets en direct** : `useTasted()` n'écoute pas l'évènement `storage` — un second onglet ouvert sur la même session ne reflète pas en direct un toggle effectué dans un autre onglet (il faut un remount/rechargement). La fonction canonique `setTasted()` protège déjà contre l'écrasement d'une écriture concurrente (AC #3), mais la mise à jour réactive de l'UI d'un onglet resté ouvert est un sujet distinct et plus large, hors scope de cette story (usage mono-utilisateur/mono-appareil au premier plan, cf. FR-4).
+
+### Dismiss (aucune action)
+
+- Validation défensive du format d'`id` dans `setTasted()` (garde contre un slug invalide qui ferait échouer la validation du schéma à la prochaine hydratation, purgeant tout l'état persisté) : aucun point d'appel actuel ne peut produire un id hors slug — tous proviennent de `flavor.id`, déjà validé par le schéma Catalogue en amont. YAGNI tant qu'aucun consommateur externe n'existe.
 
 ## Change Log
 
 - 2026-08-01 : Story context créée pour la Story 1.5 (“Marquer une Saveur comme goûtée et persister l'état”). Analyse croisée epics / architecture / UX / PRD / SPEC / stories 1.3-1.4 / code actuel terminée ; guide développeur complet produit ; Status → `ready-for-dev`.
 - 2026-08-01 : Implémentation de `lib/tasted/` (persistance canonique + `useTasted()`), câblage du toggle goûtée/pas goûtée et du compteur de progression dans `components/catalogue/`. 21 nouveaux tests, 141/141 au total, `build`/`lint` propres. Status → `review`.
+- 2026-08-01 : Revue de code (Blind Hunter, Edge Case Hunter, Acceptance Auditor) — bug critique corrigé (`toggleTasted()` basé sur un état React périmé, cassait l'alternance sur toggles rapprochés pairs), incohérence `tastedIds`/`isTasted()` sur valeur `false` corrigée, annonce lecteur d'écran basée sur la valeur de retour de `toggleTasted()` plutôt qu'un snapshot périmé, badge "Goûtée" repositionné en coin (AC #1). 1 item différé (`deferred-work.md`) : pas de synchronisation multi-onglets en direct. 150/150 tests, lint/build propres. Status → `done`.

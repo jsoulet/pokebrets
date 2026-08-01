@@ -26,6 +26,22 @@ describe("useTasted", () => {
     expect(result.current.isTasted("curry-doux")).toBe(false);
   });
 
+  it("[Review regression] never treats an explicit false-valued entry as tasted (defensive against off-canonical-path writes)", () => {
+    // The shared schema (tastedStateSchema = z.record(id, boolean())) still
+    // technically allows a `false` value even though the canonical writer
+    // (setTasted) only ever stores `true` or deletes the key. Some
+    // out-of-band write (manual storage edit, future migration) could still
+    // persist `false` explicitly — tastedIds/isTasted must stay consistent
+    // in that case rather than disagreeing with each other.
+    localStorage.setItem(TASTED_STORAGE_KEY, JSON.stringify({ "curry-doux": false }));
+
+    const { result } = renderHook(() => useTasted());
+
+    expect(result.current.isTasted("curry-doux")).toBe(false);
+    expect(result.current.tastedIds.has("curry-doux")).toBe(false);
+    expect(result.current.tastedCount).toBe(0);
+  });
+
   it("toggleTasted immediately flips a flavor to tasted and persists it", () => {
     const { result } = renderHook(() => useTasted());
 
@@ -96,6 +112,41 @@ describe("useTasted", () => {
     expect(JSON.parse(localStorage.getItem(TASTED_STORAGE_KEY) as string)).toEqual({
       "curry-doux": true,
     });
+  });
+
+  it("[Review regression] correctly alternates back to un-tasted on an EVEN number of rapid successive toggles (two taps before React re-renders)", () => {
+    // This is the exact case that exposed the stale-closure bug found in
+    // code review: toggleTasted() must never derive "next" from the
+    // render-time `state` closure, since two calls issued before React
+    // commits a re-render would both read the same stale value and both
+    // push the same boolean instead of alternating.
+    const { result } = renderHook(() => useTasted());
+
+    act(() => {
+      result.current.toggleTasted("curry-doux");
+      result.current.toggleTasted("curry-doux");
+    });
+
+    expect(result.current.isTasted("curry-doux")).toBe(false);
+    expect(result.current.tastedCount).toBe(0);
+    expect(JSON.parse(localStorage.getItem(TASTED_STORAGE_KEY) as string)).toEqual({});
+  });
+
+  it("toggleTasted returns the resulting boolean state synchronously, for callers that must react to the exact outcome (e.g. screen-reader announcements)", () => {
+    const { result } = renderHook(() => useTasted());
+
+    let firstReturn: boolean | undefined;
+    let secondReturn: boolean | undefined;
+
+    act(() => {
+      firstReturn = result.current.toggleTasted("curry-doux");
+    });
+    act(() => {
+      secondReturn = result.current.toggleTasted("curry-doux");
+    });
+
+    expect(firstReturn).toBe(true);
+    expect(secondReturn).toBe(false);
   });
 
   it("does not crash when the underlying persistence fails (still updates in-memory state)", () => {
