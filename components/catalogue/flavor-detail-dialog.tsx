@@ -1,5 +1,7 @@
 import type { Flavor } from "@/lib/schema";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { handleFlavorImageError } from "./flavor-image-fallback";
 
 // Composant de domaine (Story 1.6) : rend le détail agrandi d'une Saveur
 // dans une Dialog contrôlée. Ne possède JAMAIS son propre état "goûté/pas
@@ -20,6 +22,11 @@ type FlavorDetailDialogProps = {
   // Élément vers lequel rendre le focus à la fermeture (le bouton info de la
   // tuile ayant ouvert la Dialog) — cf. Subtask 4.4, `Dialog.Popup.finalFocus`.
   finalFocusRef?: React.RefObject<HTMLElement | null>;
+  // [Review] Notifie la fin réelle (montage/démontage) de la transition
+  // d'ouverture/fermeture de Base UI, pour permettre à l'appelant de ne
+  // démonter son propre wrapper qu'une fois la transition de sortie
+  // terminée plutôt que de façon synchrone (cf. `catalogue-page-client.tsx`).
+  onOpenChangeComplete?: (open: boolean) => void;
 };
 
 export function FlavorDetailDialog({
@@ -29,34 +36,38 @@ export function FlavorDetailDialog({
   isTasted,
   onToggle,
   finalFocusRef,
+  onOpenChangeComplete,
 }: FlavorDetailDialogProps) {
   const isArchived = flavor.status === "archived";
 
   return (
-    <Dialog open={open} onOpenChange={(nextOpen) => onOpenChange(nextOpen)}>
-      <DialogContent finalFocus={finalFocusRef}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => onOpenChange(nextOpen)}
+      onOpenChangeComplete={onOpenChangeComplete}
+    >
+      <DialogContent
+        finalFocus={() => (finalFocusRef?.current?.isConnected ? finalFocusRef.current : undefined)}
+      >
         <img
           src={flavor.image}
           alt={flavor.name}
           className="aspect-square w-full rounded-2xl object-cover"
-          onError={(event) => {
-            event.currentTarget.onerror = null;
-            event.currentTarget.src = "/placeholder-flavor.svg";
-          }}
+          onError={handleFlavorImageError}
         />
         <DialogTitle>{flavor.name}</DialogTitle>
         <DialogDescription>
           {/* Statut porté textuellement, jamais seulement par une couleur (UX-DR14). */}
           {isArchived ? "Archivée" : "Active"}
         </DialogDescription>
-        <button
+        <Button
           type="button"
           aria-pressed={isTasted}
           onClick={() => onToggle(flavor.id)}
-          className="bg-primary text-primary-foreground hover:bg-primary/80 rounded-lg px-3 py-2 text-sm font-medium"
+          className="w-fit"
         >
           {isTasted ? "Marquer comme pas goûtée" : "Marquer comme goûtée"}
-        </button>
+        </Button>
       </DialogContent>
     </Dialog>
   );

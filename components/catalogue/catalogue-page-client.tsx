@@ -31,6 +31,14 @@ export function CataloguePageClient() {
   // source de vérité pour une Dialog unique contrôlée, jamais un état
   // d'ouverture par tuile (AD-1 : jointure par `flavor.id`).
   const [selectedFlavorId, setSelectedFlavorId] = useState<string | null>(null);
+  // [Review] id de la Saveur affichée dans la Dialog, distinct de
+  // `selectedFlavorId` : reste renseigné pendant toute la transition de
+  // fermeture (Base UI `onOpenChangeComplete`) afin que `FlavorDetailDialog`
+  // ne soit démonté qu'une fois la transition CSS de sortie réellement
+  // terminée, plutôt que de façon synchrone dès le déclenchement de la
+  // fermeture — sans quoi les classes de transition de `dialog.tsx` ne
+  // pourraient jamais jouer.
+  const [displayedFlavorId, setDisplayedFlavorId] = useState<string | null>(null);
   // Bouton info ayant ouvert la Dialog, pour lui rendre le focus à la
   // fermeture (Subtask 4.4), quelle que soit la cause de fermeture (Échap,
   // clic extérieur, bouton de fermeture explicite).
@@ -59,7 +67,7 @@ export function CataloguePageClient() {
   // Catalogue (AD-1) — protège contre d'éventuelles clés orphelines dans
   // l'état persisté sans jamais le purger automatiquement.
   const tastedInCatalogueCount = flavors.filter((flavor) => tastedIds.has(flavor.id)).length;
-  const selectedFlavor = flavors.find((flavor) => flavor.id === selectedFlavorId) ?? null;
+  const displayedFlavor = flavors.find((flavor) => flavor.id === displayedFlavorId) ?? null;
 
   function handleToggleFlavor(id: string) {
     const flavor = flavors.find((candidate) => candidate.id === id);
@@ -73,6 +81,7 @@ export function CataloguePageClient() {
   function handleOpenFlavorDetail(id: string, triggerElement: HTMLButtonElement) {
     detailTriggerRef.current = triggerElement;
     setSelectedFlavorId(id);
+    setDisplayedFlavorId(id);
   }
 
   function handleDetailOpenChange(open: boolean) {
@@ -81,6 +90,14 @@ export function CataloguePageClient() {
     // appelé explicitement par le bouton toggle de la Dialog, le fait.
     if (!open) {
       setSelectedFlavorId(null);
+    }
+  }
+
+  function handleDetailOpenChangeComplete(open: boolean) {
+    // Ne démonte `FlavorDetailDialog` qu'une fois la transition de sortie de
+    // Base UI réellement terminée (voir commentaire sur `displayedFlavorId`).
+    if (!open) {
+      setDisplayedFlavorId(null);
     }
   }
 
@@ -98,12 +115,13 @@ export function CataloguePageClient() {
         onToggleFlavor={handleToggleFlavor}
         onOpenFlavorDetail={handleOpenFlavorDetail}
       />
-      {selectedFlavor ? (
+      {displayedFlavor ? (
         <FlavorDetailDialog
-          flavor={selectedFlavor}
+          flavor={displayedFlavor}
           open={selectedFlavorId !== null}
           onOpenChange={handleDetailOpenChange}
-          isTasted={tastedIds.has(selectedFlavor.id)}
+          onOpenChangeComplete={handleDetailOpenChangeComplete}
+          isTasted={tastedIds.has(displayedFlavor.id)}
           onToggle={handleToggleFlavor}
           finalFocusRef={detailTriggerRef}
         />

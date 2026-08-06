@@ -5,6 +5,19 @@ import { useCatalogue } from "@/lib/catalogue";
 import { useTasted } from "@/lib/tasted";
 import type { Catalogue } from "@/lib/schema";
 
+// [Review] Cf. catalogue-tile.test.tsx : le nom accessible du bouton toggle
+// peut chevaucher celui du bouton info depuis Story 1.6 ; seul le bouton
+// toggle porte `aria-pressed`.
+function getToggleButton(name: RegExp) {
+  const button = screen
+    .getAllByRole("button", { name })
+    .find((candidate) => candidate.hasAttribute("aria-pressed"));
+  if (!button) {
+    throw new Error(`No toggle button found matching ${name}`);
+  }
+  return button;
+}
+
 // Story 1.4 tests the UI's reaction to the hook's public contract only —
 // the hook's internal cache/fetch/freshness logic is already exhaustively
 // covered by lib/catalogue/index.test.tsx (Story 1.3). Mocking here avoids
@@ -141,7 +154,7 @@ describe("CataloguePageClient", () => {
 
     render(<CataloguePageClient />);
 
-    fireEvent.click(screen.getByRole("button", { name: /curry doux/i }));
+    fireEvent.click(getToggleButton(/curry doux/i));
 
     expect(toggleTasted).toHaveBeenCalledWith("curry-doux");
   });
@@ -152,7 +165,7 @@ describe("CataloguePageClient", () => {
 
     render(<CataloguePageClient />);
 
-    fireEvent.click(screen.getByRole("button", { name: /curry doux/i }));
+    fireEvent.click(getToggleButton(/curry doux/i));
 
     const liveRegion = screen.getByText("Curry Doux, goûtée");
     expect(liveRegion).toBeInTheDocument();
@@ -165,7 +178,7 @@ describe("CataloguePageClient", () => {
 
     render(<CataloguePageClient />);
 
-    fireEvent.click(screen.getByRole("button", { name: /curry doux/i }));
+    fireEvent.click(getToggleButton(/curry doux/i));
 
     const liveRegion = screen.getByText("Curry Doux, pas goûtée");
     expect(liveRegion).toBeInTheDocument();
@@ -189,7 +202,7 @@ describe("CataloguePageClient", () => {
 
     render(<CataloguePageClient />);
 
-    fireEvent.click(screen.getByRole("button", { name: /curry doux/i }));
+    fireEvent.click(getToggleButton(/curry doux/i));
 
     expect(screen.getByText("Curry Doux, goûtée")).toBeInTheDocument();
   });

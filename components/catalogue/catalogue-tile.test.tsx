@@ -3,6 +3,22 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { CatalogueTile } from "./catalogue-tile";
 import type { Flavor } from "@/lib/schema";
 
+// [Review] Depuis Story 1.6, le bouton info partage un fragment de nom
+// accessible ("Curry Doux") avec le bouton toggle principal (dont le nom
+// est dérivé de l'image + du texte de la tuile) : un `getByRole` filtré
+// uniquement par nom serait ambigu. Seul le bouton toggle porte
+// `aria-pressed` — ce helper lève l'ambiguïté sans dépendre de la forme
+// exacte du nom accessible calculé.
+function getToggleButton(name: RegExp) {
+  const button = screen
+    .getAllByRole("button", { name })
+    .find((candidate) => candidate.hasAttribute("aria-pressed"));
+  if (!button) {
+    throw new Error(`No toggle button found matching ${name}`);
+  }
+  return button;
+}
+
 const activeFlavor: Flavor = {
   id: "curry-doux",
   name: "Curry Doux",
@@ -93,7 +109,7 @@ describe("CatalogueTile", () => {
       <CatalogueTile flavor={activeFlavor} isTasted={true} onToggle={vi.fn()} onOpenDetail={vi.fn()} />,
     );
 
-    expect(screen.getByRole("button", { name: /curry doux/i })).toHaveAttribute("aria-pressed", "true");
+    expect(getToggleButton(/curry doux/i)).toHaveAttribute("aria-pressed", "true");
   });
 
   it("calls onToggle with the flavor id on tap/click", () => {
@@ -107,7 +123,7 @@ describe("CatalogueTile", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /curry doux/i }));
+    fireEvent.click(getToggleButton(/curry doux/i));
 
     expect(onToggle).toHaveBeenCalledWith("curry-doux");
   });
@@ -123,7 +139,7 @@ describe("CatalogueTile", () => {
       />,
     );
 
-    const button = screen.getByRole("button", { name: /curry doux/i });
+    const button = getToggleButton(/curry doux/i);
     button.focus();
     fireEvent.click(button);
 
@@ -141,7 +157,7 @@ describe("CatalogueTile", () => {
       />,
     );
 
-    const button = screen.getByRole("button", { name: /curry doux/i }) as HTMLButtonElement;
+    const button = getToggleButton(/curry doux/i) as HTMLButtonElement;
     button.focus();
     // jsdom does not itself synthesize a click from a raw keydown the way a
     // real browser does for native <button> elements; this test documents
@@ -150,6 +166,18 @@ describe("CatalogueTile", () => {
     // reachable via keyboard).
     expect(button.tagName).toBe("BUTTON");
     expect(button).not.toHaveAttribute("tabindex", "-1");
+  });
+
+  it("keeps the info button natively focusable and keyboard-activatable, mirroring the toggle button", () => {
+    render(
+      <CatalogueTile flavor={activeFlavor} isTasted={false} onToggle={vi.fn()} onOpenDetail={vi.fn()} />,
+    );
+
+    const infoButton = screen.getByRole("button", { name: /détail|info/i }) as HTMLButtonElement;
+    infoButton.focus();
+
+    expect(infoButton.tagName).toBe("BUTTON");
+    expect(infoButton).not.toHaveAttribute("tabindex", "-1");
   });
 
   it("positions the tasted badge in the tile's corner (absolute top-right), not inline with the name", () => {
@@ -180,7 +208,7 @@ describe("CatalogueTile", () => {
     );
 
     const infoButton = screen.getByRole("button", { name: /détail|info/i });
-    const toggleButton = screen.getByRole("button", { name: /curry doux/i });
+    const toggleButton = getToggleButton(/curry doux/i);
     expect(infoButton).not.toBe(toggleButton);
     // Un <button> ne peut jamais légalement contenir un autre <button> — on
     // vérifie explicitement que l'un n'est pas un ancêtre de l'autre.
@@ -227,7 +255,7 @@ describe("CatalogueTile", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /curry doux/i }));
+    fireEvent.click(getToggleButton(/curry doux/i));
 
     expect(onOpenDetail).not.toHaveBeenCalled();
   });
@@ -241,5 +269,15 @@ describe("CatalogueTile", () => {
     const badge = screen.getByText(/goûtée/i);
     expect(infoButton).toHaveClass("absolute", "top-2", "left-2");
     expect(badge).toHaveClass("absolute", "top-2", "right-2");
+  });
+
+  it("gives each flavor's info button a distinct accessible name (screen-reader navigation by buttons list)", () => {
+    render(
+      <CatalogueTile flavor={activeFlavor} isTasted={false} onToggle={vi.fn()} onOpenDetail={vi.fn()} />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Voir le détail de Curry Doux" }),
+    ).toBeInTheDocument();
   });
 });

@@ -3,6 +3,7 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 // Wrapper fin autour de `@base-ui/react/dialog`, dans le même style que
 // `components/ui/button.tsx` (composition de primitives Base UI + `cn()` +
@@ -31,11 +32,13 @@ function DialogBackdrop({ className, ...props }: DialogPrimitive.Backdrop.Props)
 }
 
 type DialogContentProps = DialogPrimitive.Popup.Props & {
-  // Titre accessible obligatoire : rendu à l'écran par défaut via
-  // `DialogTitle` interne, jamais seulement porté par une icône ou une image.
   showCloseButton?: boolean;
 };
 
+// [Review] Titre accessible obligatoire : tout appelant de `DialogContent`
+// DOIT rendre un `DialogTitle` en premier enfant, jamais seulement une icône
+// ou une image — Base UI n'impose pas cette contrainte au niveau des types,
+// le seul point d'appel actuel (`flavor-detail-dialog.tsx`) le respecte déjà.
 function DialogContent({
   className,
   children,
@@ -63,9 +66,18 @@ function DialogContent({
             // Rendu systématiquement quand `modal` est actif (recommandation
             // Base UI) : offre une sortie explicite aux lecteurs d'écran
             // tactiles, en plus du clic extérieur et de la touche Échap.
+            // Composé via `render` sur `Button` (convention locale) plutôt
+            // qu'un `<button>` fait main : `DialogClose` fusionne son
+            // comportement de fermeture dans l'élément rendu.
             <DialogClose
               aria-label="Fermer"
-              className="text-foreground/60 hover:text-foreground focus-visible:ring-ring/50 absolute top-3 right-3 rounded-full p-1 outline-none focus-visible:ring-3"
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="text-foreground/60 hover:text-foreground absolute top-3 right-3"
+                />
+              }
             >
               <XIcon aria-hidden="true" className="size-4" />
             </DialogClose>

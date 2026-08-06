@@ -3,6 +3,19 @@ import { render, screen } from "@testing-library/react";
 import { CatalogueGrid } from "./catalogue-grid";
 import type { Flavor } from "@/lib/schema";
 
+// [Review] Cf. catalogue-tile.test.tsx : le nom accessible du bouton toggle
+// peut chevaucher celui du bouton info depuis Story 1.6 ; seul le bouton
+// toggle porte `aria-pressed`.
+function getToggleButton(name: RegExp) {
+  const button = screen
+    .getAllByRole("button", { name })
+    .find((candidate) => candidate.hasAttribute("aria-pressed"));
+  if (!button) {
+    throw new Error(`No toggle button found matching ${name}`);
+  }
+  return button;
+}
+
 const flavors: Flavor[] = [
   { id: "curry-doux", name: "Curry Doux", image: "https://cms.brets.fr/curry.png", status: "active" },
   { id: "poivre-sauvage", name: "Poivre Sauvage", image: "https://cms.brets.fr/poivre.png", status: "archived" },
@@ -46,8 +59,8 @@ describe("CatalogueGrid", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: /curry doux/i })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("button", { name: /poivre sauvage/i })).toHaveAttribute(
+    expect(getToggleButton(/curry doux/i)).toHaveAttribute("aria-pressed", "true");
+    expect(getToggleButton(/poivre sauvage/i)).toHaveAttribute(
       "aria-pressed",
       "false",
     );
@@ -64,7 +77,7 @@ describe("CatalogueGrid", () => {
       />,
     );
 
-    screen.getByRole("button", { name: /curry doux/i }).click();
+    getToggleButton(/curry doux/i).click();
 
     expect(onToggleFlavor).toHaveBeenCalledWith("curry-doux");
   });

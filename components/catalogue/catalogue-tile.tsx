@@ -1,5 +1,7 @@
 import { InfoIcon } from "lucide-react";
 import type { Flavor } from "@/lib/schema";
+import { Button } from "@/components/ui/button";
+import { handleFlavorImageError } from "./flavor-image-fallback";
 
 // Composant de présentation pur — chip-tile d'une Saveur du Catalogue.
 // Ne lit ni n'écrit jamais `localStorage` lui-même (Story 1.5) : l'état
@@ -37,12 +39,7 @@ export function CatalogueTile({ flavor, isTasted, onToggle, onOpenDetail }: Cata
           alt={flavor.name}
           className="aspect-square w-full rounded-2xl object-cover"
           loading="lazy"
-          onError={(event) => {
-            // Repli si l'URL distante (cms.brets.fr) est cassée ou inaccessible
-            // hors-ligne : un placeholder local plutôt qu'une icône d'erreur navigateur.
-            event.currentTarget.onerror = null;
-            event.currentTarget.src = "/placeholder-flavor.svg";
-          }}
+          onError={handleFlavorImageError}
         />
         <span className="text-foreground line-clamp-2 text-sm font-medium">{flavor.name}</span>
         {isArchived ? (
@@ -55,14 +52,16 @@ export function CatalogueTile({ flavor, isTasted, onToggle, onOpenDetail }: Cata
           </span>
         ) : null}
       </button>
-      <button
+      <Button
         type="button"
-        aria-label="Voir le détail"
+        variant="ghost"
+        size="icon"
+        aria-label={`Voir le détail de ${flavor.name}`}
         onClick={(event) => onOpenDetail(flavor.id, event.currentTarget)}
-        className="bg-background/90 text-foreground/80 hover:text-foreground focus-visible:ring-ring/50 absolute top-2 left-2 flex size-8 items-center justify-center rounded-full outline-none focus-visible:ring-3"
+        className="bg-background/90 text-foreground/80 hover:text-foreground hover:bg-background/90 absolute top-2 left-2 size-11 rounded-full"
       >
         <InfoIcon aria-hidden="true" className="size-4" />
-      </button>
+      </Button>
       {isTasted ? (
         // [Review] Badge goûtée (`badge-tasted`, DESIGN.md) posé "en coin de
         // la tuile" (AC #1) — positionné en dehors du `<button>` (décoratif,

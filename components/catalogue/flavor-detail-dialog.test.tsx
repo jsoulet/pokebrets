@@ -1,5 +1,6 @@
+import { useRef, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { FlavorDetailDialog } from "./flavor-detail-dialog";
 import type { Flavor } from "@/lib/schema";
 
@@ -166,5 +167,66 @@ describe("FlavorDetailDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: /fermer/i }));
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("returns focus to the connected element referenced by finalFocusRef when closed via Escape", async () => {
+    function Wrapper() {
+      const triggerRef = useRef<HTMLButtonElement | null>(null);
+      const [open, setOpen] = useState(true);
+      return (
+        <>
+          <button ref={triggerRef} type="button">
+            Trigger
+          </button>
+          <FlavorDetailDialog
+            flavor={activeFlavor}
+            open={open}
+            onOpenChange={setOpen}
+            isTasted={false}
+            onToggle={vi.fn()}
+            finalFocusRef={triggerRef}
+          />
+        </>
+      );
+    }
+    render(<Wrapper />);
+
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    await waitFor(() =>
+      expect(document.activeElement).toBe(screen.getByRole("button", { name: "Trigger" })),
+    );
+  });
+
+  it("does not throw and skips focus restoration when finalFocusRef points to a disconnected node at close time", async () => {
+    function Wrapper() {
+      const triggerRef = useRef<HTMLButtonElement | null>(null);
+      const [open, setOpen] = useState(true);
+      const [showTrigger, setShowTrigger] = useState(true);
+      return (
+        <>
+          {showTrigger ? (
+            <button ref={triggerRef} type="button">
+              Trigger
+            </button>
+          ) : null}
+          <button type="button" onClick={() => setShowTrigger(false)}>
+            Unmount trigger
+          </button>
+          <FlavorDetailDialog
+            flavor={activeFlavor}
+            open={open}
+            onOpenChange={setOpen}
+            isTasted={false}
+            onToggle={vi.fn()}
+            finalFocusRef={triggerRef}
+          />
+        </>
+      );
+    }
+    render(<Wrapper />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Unmount trigger", hidden: true }));
+    expect(() => fireEvent.keyDown(document, { key: "Escape" })).not.toThrow();
   });
 });
