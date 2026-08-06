@@ -10,21 +10,40 @@ const flavors: Flavor[] = [
 
 describe("CatalogueGrid", () => {
   it("renders one tile per flavor", () => {
-    render(<CatalogueGrid flavors={flavors} tastedIds={new Set()} onToggleFlavor={vi.fn()} />);
+    render(
+      <CatalogueGrid
+        flavors={flavors}
+        tastedIds={new Set()}
+        onToggleFlavor={vi.fn()}
+        onOpenFlavorDetail={vi.fn()}
+      />,
+    );
 
     expect(screen.getByText("Curry Doux")).toBeInTheDocument();
     expect(screen.getByText("Poivre Sauvage")).toBeInTheDocument();
   });
 
   it("renders the exact number of tiles as flavors, regardless of dataset size", () => {
-    render(<CatalogueGrid flavors={flavors} tastedIds={new Set()} onToggleFlavor={vi.fn()} />);
+    render(
+      <CatalogueGrid
+        flavors={flavors}
+        tastedIds={new Set()}
+        onToggleFlavor={vi.fn()}
+        onOpenFlavorDetail={vi.fn()}
+      />,
+    );
 
     expect(screen.getAllByRole("listitem")).toHaveLength(flavors.length);
   });
 
   it("marks tiles as tasted purely from the tastedIds set, without owning any storage logic", () => {
     render(
-      <CatalogueGrid flavors={flavors} tastedIds={new Set(["curry-doux"])} onToggleFlavor={vi.fn()} />,
+      <CatalogueGrid
+        flavors={flavors}
+        tastedIds={new Set(["curry-doux"])}
+        onToggleFlavor={vi.fn()}
+        onOpenFlavorDetail={vi.fn()}
+      />,
     );
 
     expect(screen.getByRole("button", { name: /curry doux/i })).toHaveAttribute("aria-pressed", "true");
@@ -36,10 +55,34 @@ describe("CatalogueGrid", () => {
 
   it("forwards the flavor id to onToggleFlavor when a tile is toggled", () => {
     const onToggleFlavor = vi.fn();
-    render(<CatalogueGrid flavors={flavors} tastedIds={new Set()} onToggleFlavor={onToggleFlavor} />);
+    render(
+      <CatalogueGrid
+        flavors={flavors}
+        tastedIds={new Set()}
+        onToggleFlavor={onToggleFlavor}
+        onOpenFlavorDetail={vi.fn()}
+      />,
+    );
 
     screen.getByRole("button", { name: /curry doux/i }).click();
 
     expect(onToggleFlavor).toHaveBeenCalledWith("curry-doux");
+  });
+
+  it("forwards the flavor id and the info button element to onOpenFlavorDetail when a tile's info button is activated", () => {
+    const onOpenFlavorDetail = vi.fn();
+    render(
+      <CatalogueGrid
+        flavors={flavors}
+        tastedIds={new Set()}
+        onToggleFlavor={vi.fn()}
+        onOpenFlavorDetail={onOpenFlavorDetail}
+      />,
+    );
+
+    const infoButton = screen.getAllByRole("button", { name: /détail|info/i })[0];
+    infoButton.click();
+
+    expect(onOpenFlavorDetail).toHaveBeenCalledWith("curry-doux", infoButton);
   });
 });

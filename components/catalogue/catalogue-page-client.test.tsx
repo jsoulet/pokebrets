@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within, waitFor } from "@testing-library/react";
 import { CataloguePageClient } from "./catalogue-page-client";
 import { useCatalogue } from "@/lib/catalogue";
 import { useTasted } from "@/lib/tasted";
@@ -192,5 +192,71 @@ describe("CataloguePageClient", () => {
     fireEvent.click(screen.getByRole("button", { name: /curry doux/i }));
 
     expect(screen.getByText("Curry Doux, goûtée")).toBeInTheDocument();
+  });
+
+  it("does not render a detail dialog before any info button is activated", () => {
+    mockedUseCatalogue.mockReturnValue({ data: catalogue, status: "ready", error: null, retry: vi.fn() });
+
+    render(<CataloguePageClient />);
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("opens the flavor detail dialog for the corresponding flavor when its info button is activated", () => {
+    mockedUseCatalogue.mockReturnValue({ data: catalogue, status: "ready", error: null, retry: vi.fn() });
+
+    render(<CataloguePageClient />);
+
+    const infoButtons = screen.getAllByRole("button", { name: /détail|info/i });
+    fireEvent.click(infoButtons[0]);
+
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByText("Curry Doux")).toBeInTheDocument();
+  });
+
+  it("toggles the flavor from within the dialog using the same coordination function as the tile, and announces it", () => {
+    const toggleTasted = vi.fn().mockReturnValue(true);
+    mockedUseCatalogue.mockReturnValue({ data: catalogue, status: "ready", error: null, retry: vi.fn() });
+    mockUseTasted({ toggleTasted });
+
+    render(<CataloguePageClient />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: /détail|info/i })[0]);
+    fireEvent.click(screen.getByRole("button", { name: /marquer comme goûtée/i }));
+
+    expect(toggleTasted).toHaveBeenCalledWith("curry-doux");
+    expect(screen.getByText("Curry Doux, goûtée")).toBeInTheDocument();
+  });
+
+  it("closes the dialog on Escape without mutating the tasted state", () => {
+    const toggleTasted = vi.fn();
+    mockedUseCatalogue.mockReturnValue({ data: catalogue, status: "ready", error: null, retry: vi.fn() });
+    mockUseTasted({ toggleTasted });
+
+    render(<CataloguePageClient />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: /détail|info/i })[0]);
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(toggleTasted).not.toHaveBeenCalled();
+  });
+
+  it("returns focus to the info button that opened the dialog after it closes", async () => {
+    mockedUseCatalogue.mockReturnValue({ data: catalogue, status: "ready", error: null, retry: vi.fn() });
+
+    render(<CataloguePageClient />);
+
+    const infoButton = screen.getAllByRole("button", { name: /détail|info/i })[0];
+    fireEvent.click(infoButton);
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await waitFor(() => expect(document.activeElement).toBe(infoButton));
   });
 });

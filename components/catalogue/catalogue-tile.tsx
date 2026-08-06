@@ -1,3 +1,4 @@
+import { InfoIcon } from "lucide-react";
 import type { Flavor } from "@/lib/schema";
 
 // Composant de présentation pur — chip-tile d'une Saveur du Catalogue.
@@ -5,16 +6,21 @@ import type { Flavor } from "@/lib/schema";
 // goûté/pas goûté et la mutation lui sont fournis en props par la frontière
 // client (`catalogue-page-client.tsx`), afin que la tuile reste réutilisable
 // et testable sans dépendre de `lib/tasted/` (AD-2/AD-4).
-// Ne porte pas encore l'action "détail" (Story 1.6) : le bouton de toggle
-// occupe toute la tuile pour l'instant, une future action frère distincte
-// (ex: icône info) pourra être ajoutée à côté sans imbrication de <button>.
+// Story 1.6 : la tuile porte désormais DEUX actions interactives sœurs, un
+// <button> ne pouvant jamais légalement en contenir un autre. Le bouton
+// principal (toggle goûté/pas goûté) occupe toute la tuile ; un second petit
+// bouton "info" (icône dédiée, jamais imbriqué) ouvre le détail de la Saveur
+// sans jamais déclencher le toggle. Le bouton info est positionné en coin
+// opposé au badge "Goûtée" (top-left vs top-right) pour éviter tout conflit
+// visuel.
 type CatalogueTileProps = {
   flavor: Flavor;
   isTasted: boolean;
   onToggle: (id: Flavor["id"]) => void;
+  onOpenDetail: (id: Flavor["id"], triggerElement: HTMLButtonElement) => void;
 };
 
-export function CatalogueTile({ flavor, isTasted, onToggle }: CatalogueTileProps) {
+export function CatalogueTile({ flavor, isTasted, onToggle, onOpenDetail }: CatalogueTileProps) {
   const isArchived = flavor.status === "archived";
   return (
     <li
@@ -48,6 +54,14 @@ export function CatalogueTile({ flavor, isTasted, onToggle }: CatalogueTileProps
             Archivée
           </span>
         ) : null}
+      </button>
+      <button
+        type="button"
+        aria-label="Voir le détail"
+        onClick={(event) => onOpenDetail(flavor.id, event.currentTarget)}
+        className="bg-background/90 text-foreground/80 hover:text-foreground focus-visible:ring-ring/50 absolute top-2 left-2 flex size-8 items-center justify-center rounded-full outline-none focus-visible:ring-3"
+      >
+        <InfoIcon aria-hidden="true" className="size-4" />
       </button>
       {isTasted ? (
         // [Review] Badge goûtée (`badge-tasted`, DESIGN.md) posé "en coin de
