@@ -31,6 +31,16 @@ export function CatalogueTile({ flavor, isTasted, onToggle, onOpenDetail }: Cata
       <button
         type="button"
         aria-pressed={isTasted}
+        // [Review] Story 1.7 code review : nom accessible explicite plutôt
+        // que laissé au calcul par défaut (concaténation de l'alt de
+        // l'image + du nom + du badge archivé descendant). Sans cet
+        // `aria-label`, la phrase complète du badge archivé ("Cette saveur
+        // n'est plus produite") se serait retrouvée absorbée dans le nom
+        // du bouton à chaque interaction. Le badge reste un `<span>`
+        // descendant normal (pas `aria-hidden`), donc toujours perceptible
+        // par un lecteur d'écran en lecture linéaire (UX-DR14), juste plus
+        // "annoncé au clic sur le bouton".
+        aria-label={flavor.name}
         onClick={() => onToggle(flavor.id)}
         className="flex w-full flex-col items-center gap-2 rounded-3xl p-3 text-center"
       >

@@ -179,6 +179,32 @@ describe("useCatalogue", () => {
     expect(result.current.isOffline).toBe(false);
   });
 
+  it("[Review] Story 1.7: isOffline resets to false even when the successful retry's revision is ignored as older/equal", async () => {
+    // Regression test: a background failure sets isOffline to true; a
+    // subsequent successful fetch that returns an equal/older generatedAt
+    // (silently ignored per Subtask 4.3/4.5) must still clear isOffline,
+    // since the network did respond — it's just not "hors ligne" anymore.
+    localStorage.setItem(CATALOGUE_CACHE_KEY, JSON.stringify(olderCatalogue));
+    vi.mocked(fetch).mockRejectedValueOnce(new Error("Failed to fetch"));
+
+    const { result } = renderHook(() => useCatalogue());
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(result.current.isOffline).toBe(true);
+
+    // Same (older/equal) revision as already held -> ignored by the
+    // freshness comparison, data stays untouched.
+    mockFetchOnce({ ok: true, json: async () => olderCatalogue });
+    act(() => {
+      result.current.retry();
+    });
+
+    await waitFor(() => expect(result.current.isOffline).toBe(false));
+    expect(result.current.data).toEqual(olderCatalogue);
+  });
+
   it("Subtask 5.6: an older concurrent response arriving after a newer one is ignored", async () => {
     // Simulate retry() firing a second fetch that resolves with an OLDER
     // generatedAt after the first (newer) response already applied.

@@ -86,6 +86,13 @@ export function useCatalogue(): UseCatalogueResult {
         currentRevisionRef.current !== null &&
         Date.parse(result.data.generatedAt) <= Date.parse(currentRevisionRef.current)
       ) {
+        // [Review] Le réseau a bel et bien répondu ici (juste avec une
+        // révision non plus récente, silencieusement ignorée ci-dessus) —
+        // ce n'est plus "hors ligne", même si aucune nouvelle donnée n'est
+        // appliquée. Sans ce reset, `isOffline` resterait bloqué à `true`
+        // après un précédent échec de fond, jusqu'à la prochaine réponse
+        // strictement plus récente.
+        setIsOffline(false);
         return;
       }
 

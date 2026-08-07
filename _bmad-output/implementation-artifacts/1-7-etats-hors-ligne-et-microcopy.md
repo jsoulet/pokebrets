@@ -4,7 +4,7 @@ baseline_commit: d406e0309b8db2d13d6cade41a63de5e7ec4affd
 
 # Story 1.7: États hors-ligne et microcopy
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -138,3 +138,11 @@ Claude Sonnet 5 (GitHub Copilot CLI)
 ## Change Log
 
 - {date} — Implémentation initiale Story 1.7 : signal `isOffline` dans `useCatalogue()`, bannière hors ligne discrète dans `CataloguePageClient`, alignement du wording de l'état vide sur l'AC #2, audit microcopy complet (correction du badge "Archivée" → "Cette saveur n'est plus produite" suite à l'audit Task 4, validé avec l'utilisateur). 179/179 tests verts, lint et build OK.
+- {date} — Revue de code (3 reviewers, 8 findings dédupliqués : 1 decision, 2 patch, 1 defer, 4 dismiss). Décision utilisateur : garder le format pilule du badge archivé tel quel. Patches appliqués : `isOffline` repasse désormais à `false` même quand la revalidation réussie est ignorée comme plus ancienne/égale (bug reproduit par les 3 reviewers indépendamment) ; nom accessible du bouton toggle fixé via `aria-label` explicite pour ne plus absorber la phrase complète du badge archivé. Defer consigné dans `deferred-work.md` (absence de garde d'ordre des requêtes dans `revalidate()`, gap pré-existant depuis Story 1.3). 180/180 tests, lint/build propres. Status → `done`.
+
+### Review Findings
+
+- [x] [Review][Decision] Le badge archivé porte désormais une phrase complète ("Cette saveur n'est plus produite") dans un format pilule compact (`rounded-full`, `text-xs`, `px-2 py-0.5`) hérité de DESIGN.md pour l'ancien badge court "Archivée" — risque réel de retour à la ligne sur mobile 2 colonnes et de tuiles de hauteurs inégales dans la même rangée de grille (CSS Grid étire les cellules d'une même rangée à la hauteur de la plus haute). Il y a un conflit entre le wording exact exigé par EXPERIENCE.md (Do/Don't) et le habillage visuel "pilule compacte" prescrit par DESIGN.md pour ce badge. **Décision utilisateur (2026-08-07) : garder le format pilule tel quel, accepter l'éventuel retour à la ligne** — pas de régression fonctionnelle, jugé acceptable en l'état ; aucun changement de code requis.
+- [x] [Review][Patch] `isOffline` ne repasse jamais à `false` quand une revalidation réussit mais est ignorée comme plus ancienne/égale à la révision déjà détenue — [lib/catalogue/index.ts:83-89]. **Corrigé** : `setIsOffline(false)` ajouté dans cette branche d'ignorance-car-obsolète, avant le `return`. Test de régression ajouté dans `lib/catalogue/index.test.tsx` reproduisant exactement ce scénario (échec de fond → `isOffline: true` → retry réussi avec révision égale/plus ancienne → `isOffline` doit repasser à `false`).
+- [x] [Review][Patch] Le badge archivé texte complet est rendu À L'INTÉRIEUR du `<button>` principal de bascule goûté/pas goûté (`catalogue-tile.tsx`), ce qui concatène désormais toute la phrase dans le nom accessible du bouton — [components/catalogue/catalogue-tile.tsx:38-51]. **Corrigé** : ajout d'un `aria-label={flavor.name}` explicite sur le bouton toggle, qui fixe son nom accessible indépendamment du contenu descendant (le badge archivé reste un `<span>` normal, non `aria-hidden`, toujours perceptible en lecture linéaire — UX-DR14 respecté). Aucun test existant cassé (aucun ne dépendait du nom concaténé "Curry DouxCurry Doux[...]").
+- [x] [Review][Defer] Absence de garde d'ordre des requêtes (`requestId`/`AbortController`) dans `revalidate()` : une revalidation plus ancienne qui échoue après qu'un retry plus récent a réussi peut repasser `isOffline` à `true` à tort — [lib/catalogue/index.ts:57-98] — deferred, pre-existing (gap architectural présent depuis Story 1.3, non introduit par cette story ; nécessiterait une refonte plus large de `revalidate()` hors du périmètre de Story 1.7).

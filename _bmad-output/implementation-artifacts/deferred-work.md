@@ -25,3 +25,7 @@
 ## Deferred from: code review of story-1-6 (2026-08-02)
 
 - Aucun test n'atteste réellement du piège de focus (Tab) à l'intérieur de la Dialog (AC #3, `components/catalogue/flavor-detail-dialog.test.tsx`) — jsdom ne simule pas de façon fiable le déplacement de focus piloté par Tab comme un vrai navigateur (même limitation déjà acceptée pour le test "Enter réel" du bouton toggle de Story 1.5). Une vérification fiable du focus-trap de Base UI nécessiterait un outillage E2E navigateur réel (ex. Playwright), hors périmètre de cette suite Vitest+jsdom.
+
+## Deferred from: code review of story-1-7 (2026-08-07)
+
+- Absence de garde d'ordre des requêtes (`requestId`/`AbortController`) dans `revalidate()` (`lib/catalogue/index.ts`) : une revalidation plus ancienne qui échoue après qu'un retry plus récent a réussi peut faire repasser `isOffline`/`status`/`error` à un état incorrect (ex: réafficher la bannière "hors ligne" ou une erreur périmée). Gap architectural présent depuis Story 1.3 (le hook n'a jamais eu de séquencement des réponses asynchrones), amplifié en visibilité par l'ajout du signal `isOffline` en Story 1.7 mais non introduit par elle. Nécessiterait une refonte de `revalidate()` avec un identifiant de requête ou un `AbortController`, hors périmètre de cette story.
