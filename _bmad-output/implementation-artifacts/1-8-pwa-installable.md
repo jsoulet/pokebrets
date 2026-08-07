@@ -1,0 +1,162 @@
+---
+baseline_commit: 8fe31d34397100da83aa6971ccfcb89acdc42f34
+---
+
+# Story 1.8: PWA installable
+
+Status: review
+
+<!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
+
+## Story
+
+As a utilisateur (Johan),
+I want pouvoir installer Crounch comme une app sur mon téléphone, avec l'app shell qui se charge instantanément même hors-ligne,
+so that l'ouvrir en rayon soit aussi rapide qu'une app native, sans dépendre d'un chargement réseau de l'interface elle-même.
+
+## Acceptance Criteria
+
+1. **Given** le projet buildé avec Serwist (`@serwist/next`) **When** l'app est visitée sur mobile **Then** un manifest PWA permet l'installation ("Ajouter à l'écran d'accueil")
+2. **Given** le service worker Serwist actif **When** l'app est rouverte hors-ligne **Then** l'app shell (HTML/CSS/JS) se charge depuis le precache — sans dépendre du réseau
+3. **And** l'URL distante du Catalogue (`data/catalogue.json` via `raw.githubusercontent.com`) est explicitement exclue du precache/runtime-cache de Serwist, pour que `lib/catalogue/` reste seul propriétaire de la fraîcheur des données (AD-2)
+
+## Tasks / Subtasks
+
+- [x] Task 1: Installer et configurer Serwist en mode configurateur (compatible `output: 'export'` + Turbopack) (AC #1, #2, #3)
+  - [x] Subtask 1.1: Installer les dépendances : `npm i -D @serwist/next @serwist/cli serwist esbuild concurrently`. Ne PAS utiliser le mode classique `withSerwistInit` (hook webpack) ni `@serwist/turbopack` (route handler dynamique, incompatible avec `output: 'export'` — aucune route serveur n'est possible en export statique) : le mode configurateur (`@serwist/next/config`) génère le service worker via une étape de build externe (`serwist build`) après `next build`, ce qui est bundler-agnostique et documenté comme la seule approche fiable avec un export statique.
+  - [x] Subtask 1.2: Créer `serwist.config.js` à la racine avec `swSrc: "app/sw.ts"`, `swDest: "public/sw.js"`. Ne pas ajouter `disablePrecacheManifest` — laisser Serwist précacher automatiquement toutes les routes prérendues de l'export statique (c'est tout l'intérêt du mode configurateur vs. le mode classique webpack).
+  - [x] Subtask 1.3: Mettre à jour `package.json` scripts : `"build": "next build && serwist build"`. Ne PAS toucher au script `"dev"` (le service worker n'est pas requis en développement pour cette story — garder `next dev` seul ; si besoin futur de tester le SW en dev, ce sera une itération séparée).
+  - [x] Subtask 1.4: Ajouter `public/sw*` et `public/swe-worker*` à `.gitignore` (fichiers générés, jamais committés).
+  - [x] Subtask 1.5: Mettre à jour `tsconfig.json` : ajouter `"@serwist/next/typings"` à `compilerOptions.types`, `"webworker"` à `compilerOptions.lib`, et `"public/sw.js"` à `exclude` (types pour `self.serwist`, types `ServiceWorker`/`WebWorker` globaux).
+- [x] Task 2: Créer le service worker avec exclusion explicite du Catalogue distant (AC #2, #3, AD-2)
+  - [x] Subtask 2.1: Créer `app/sw.ts` avec le template Serwist standard (`Serwist`, `precacheEntries: self.__SW_MANIFEST`, `skipWaiting: true`, `clientsClaim: true`, `navigationPreload: true`).
+  - [x] Subtask 2.2: Configurer `runtimeCaching` en partant de `defaultCache` (`@serwist/next/worker`) MAIS en excluant explicitement toute requête vers `raw.githubusercontent.com` (l'hôte réel utilisé par `lib/catalogue/` pour fetcher `data/catalogue.json`, cf. `lib/catalogue/index.ts`) — soit en filtrant `defaultCache` pour retirer toute règle qui matcherait cet hôte, soit en ajoutant en tête de la liste `runtimeCaching` une règle explicite `{ matcher: ({ url }) => url.hostname === "raw.githubusercontent.com", handler: new NetworkOnly() }` (aucune mise en cache d'aucune sorte par le service worker pour cet hôte — ni precache ni runtime cache — `lib/catalogue/` gère déjà son propre cache via `lib/catalogue/cache.ts`/local storage, AD-2).
+  - [x] Subtask 2.3: Vérifier qu'aucune règle de `defaultCache` par défaut ne capturerait accidentellement du JSON générique (`defaultCache` inclut typiquement des règles pour polices Google Fonts, images, JS/CSS Next.js, et un fallback générique) — auditer la liste retournée par `defaultCache` et documenter explicitement dans les Completion Notes quelles règles ont été gardées/exclues/modifiées.
+  - [x] Subtask 2.4: Ne PAS ajouter de fallback offline (`/~offline`) — hors scope de cette story (aucune AC ne le demande), et l'app shell lui-même doit déjà fonctionner offline via le precache (AC #2) ; garder le service worker minimal et strictement scopé aux ACs.
+- [x] Task 3: Ajouter le manifest PWA (AC #1)
+  - [x] Subtask 3.1: Créer `public/manifest.json` avec `name: "Crounch"`, `short_name: "Crounch"`, `description` reprenant celle de `app/layout.tsx` ("Suivi de dégustation des saveurs Brets"), `start_url: "/"`, `display: "standalone"`, `orientation: "portrait"`, `theme_color` et `background_color` alignés sur les tokens Tailwind existants (`--background: #fdf0dd` en light mode, cf. `app/globals.css` ligne 58 — utiliser cette valeur hex comme `background_color`/`theme_color`, pas une couleur inventée).
+  - [x] Subtask 3.2: Générer/ajouter les icônes PWA requises (192x192 et 512x512 minimum, format PNG) dans `public/icons/` — **aucune icône de marque Crounch n'existe actuellement dans le repo** (seuls des SVG de démo Next.js dans `public/` et un favicon existent). **Décision utilisateur (prise avant l'implémentation) : improviser un visuel simple basé sur la palette existante** (`--background: #fdf0dd`, `--primary: #dda138`, cf. `app/globals.css`) plutôt que d'attendre un asset de marque externe — par exemple une icône géométrique simple (ex: initiale "C" ou pictogramme de chip) sur fond `--primary`/`--background`, générée programmatiquement (SVG converti en PNG) sans dépendance de design externe. Documenter le choix exact fait dans les Completion Notes.
+  - [x] Subtask 3.3: Référencer `public/manifest.json` dans `app/layout.tsx` via `metadata.manifest = "/manifest.json"` (API Next.js Metadata standard, pas de balise `<link>` manuelle).
+  - [x] Subtask 3.4: Ajouter les métadonnées PWA complémentaires dans `app/layout.tsx` : `appleWebApp: { capable: true, statusBarStyle: "default", title: "Crounch" }`, `formatDetection: { telephone: false }` — nécessaires pour une installation correcte sur iOS Safari (le manifest seul ne suffit pas sur iOS).
+- [x] Task 4: Enregistrer le service worker côté client (AC #2)
+  - [x] Subtask 4.1: Utiliser `SerwistProvider` (`@serwist/next/react`, disponible en mode configurateur) dans `app/layout.tsx` pour enregistrer le service worker — préférer ce composant officiel à un enregistrement manuel via `useEffect`/`navigator.serviceWorker.register`, pour rester aligné avec le pattern documenté Serwist et éviter les pièges de double-enregistrement.
+  - [x] Subtask 4.2: Ne PAS désactiver le service worker en développement (`disable: process.env.NODE_ENV === "development"`) sauf si cela cause des problèmes de dev observés pendant l'implémentation — documenter le choix fait dans les Completion Notes.
+- [x] Task 5: Vérifier le pipeline de build de bout en bout (AC #1, #2, #3 — point d'attention architectural documenté : issue vercel/next.js#73457)
+  - [x] Subtask 5.1: Lancer `npm run build` et vérifier que `public/sw.js` est bien généré (pas seulement `next build` qui réussit — vérifier explicitement la présence et le contenu non-vide du fichier après l'étape `serwist build`).
+  - [x] Subtask 5.2: Vérifier dans `out/sw.js` (dossier d'export statique) que le fichier `sw.js` a bien été copié/est présent à la racine servie, et inspecter son contenu généré pour confirmer que la règle d'exclusion de `raw.githubusercontent.com` (Task 2) y apparaît bien (pas seulement dans la source `app/sw.ts` — vérifier le bundle réellement buildé).
+  - [x] Subtask 5.3: Vérifier manuellement (ou via un test si l'outillage le permet simplement) que `out/manifest.json` est bien présent dans l'export statique et servable, et que `app/layout.tsx` référence bien `/manifest.json` dans le HTML généré (`out/index.html`).
+  - [x] Subtask 5.4: Si un problème de génération de `sw.js` avec l'export statique est rencontré (piège documenté dans l'architecture, issue vercel/next.js#73457), documenter précisément le comportement observé et la solution appliquée dans les Completion Notes — ne pas contourner silencieusement (ex: ne pas désactiver `output: 'export'` sans HALT et validation utilisateur, car cela casserait AD-4).
+- [x] Task 6: Validation complète
+  - [x] Subtask 6.1: `npx vitest run` → 100% des tests existants toujours verts (cette story n'ajoute pas de nouvelle logique applicative testable unitairement — le service worker et le manifest sont des artefacts de build/config, pas du code métier — mais aucune régression sur `lib/catalogue/`, `lib/tasted/`, composants existants n'est acceptable).
+  - [x] Subtask 6.2: `npm run lint` → 0 erreur, pas de nouveau warning au-delà des 2 `@next/next/no-img-element` déjà connus/acceptés.
+  - [x] Subtask 6.3: `npm run build` → succès, export statique intact (`○ (Static)`), ET génération confirmée de `public/sw.js`/`out/sw.js` (Task 5).
+  - [x] Subtask 6.4: Mettre à jour ce fichier story (Tasks/Subtasks cochés, Dev Agent Record complet, Status → `review`).
+
+## Dev Notes
+
+- **Cette story est structurellement différente des précédentes** : aucune des Stories 1.1 à 1.7 n'a touché à la configuration de build/déploiement elle-même — cette story ajoute une étape de build supplémentaire (`serwist build`) et des artefacts statiques (manifest, icônes, service worker), pas de nouvelle logique métier React/hooks. Le risque principal n'est pas fonctionnel (comme les stories précédentes) mais **pipeline** : s'assurer que Serwist génère correctement `sw.js` en présence de `output: 'export'`.
+- **Piège connu et documenté dans l'architecture (ARCHITECTURE-SPINE.md, section Deferred)** : "Piège connu de génération de `sw.js` avec Serwist + `output: 'export'` (issue vercel/next.js#73457) — point d'attention à l'implémentation (tester le pipeline de build tôt), pas un blocage architectural." Task 5 de cette story existe spécifiquement pour détecter et documenter ce piège tôt, comme demandé par l'architecture.
+- **Choix technique clé : mode configurateur Serwist, pas le mode classique webpack ni le mode Turbopack.** Recherche effectuée (documentation officielle Serwist, 2026) :
+  - Le mode classique (`withSerwistInit` de `@serwist/next`, hook `next.config.js`) est couplé au cycle de vie webpack et ne voit pas les routes prérendues après le build — problématique pour un export statique où *tout* est prérendu.
+  - Le mode Turbopack (`@serwist/turbopack`) nécessite un **Route Handler** (`app/serwist/[path]/route.ts`, `dynamic`/`GET` exportés) — une route serveur dynamique, **structurellement incompatible avec `output: 'export'`** (AD-4 : aucun code serveur applicatif, export 100% statique).
+  - Le **mode configurateur** (`@serwist/next/config`, script `serwist build` exécuté après `next build`) est bundler-agnostique (fonctionne aussi bien avec Turbopack, bundler par défaut de Next.js 16) et construit le service worker **après** que Next.js ait prérendu toutes les routes — ce qui lui permet de précacher automatiquement l'export statique complet. C'est l'approche recommandée pour ce projet (Next.js 16.x, Turbopack par défaut, `output: 'export'`).
+- **Aucune icône de marque Crounch n'existe actuellement dans le repo.** `public/` ne contient que les SVG de démo générés par `create-next-app` (`file.svg`, `globe.svg`, `next.svg`, `vercel.svg`, `window.svg`) et un `favicon.ico` neutre. Un manifest PWA installable a besoin d'au moins deux icônes PNG (192×192 et 512×512). Si aucune direction de marque n'est trouvée dans DESIGN.md pour un logo/icône Crounch, **HALT et demander à l'utilisateur** plutôt que d'improviser un visuel — ceci est une décision de marque, pas une décision technique.
+- **`theme_color`/`background_color` du manifest doivent réutiliser les tokens CSS existants**, pas des couleurs inventées : `app/globals.css` définit `--background: #fdf0dd` (mode clair, ligne 58) et `--primary: #dda138` — cohérent avec la palette de marque Brets déjà établie dans DESIGN.md. Ne pas introduire de nouvelle couleur "PWA" non documentée.
+- **AD-2 est le garde-fou le plus critique de cette story** : le service worker Serwist ne doit **jamais** mettre en cache (ni precache, ni runtime cache) l'URL distante du Catalogue (`raw.githubusercontent.com/.../data/catalogue.json`, fetchée par `lib/catalogue/index.ts`). `lib/catalogue/` reste le seul propriétaire de la fraîcheur des données (cache local storage + comparaison de révision `generatedAt`, Story 1.3). Si le service worker interceptait et servait une réponse cache pour cette URL, cela court-circuiterait silencieusement toute la logique de fraîcheur déjà construite et testée en Stories 1.3/1.7 (`isOffline`, dégradation réseau) — un bug qui serait très difficile à diagnostiquer a posteriori car il n'apparaîtrait que via le comportement du service worker, invisible dans le code applicatif React.
+- **Ne pas confondre le "app shell" (AC #2) avec les données du Catalogue** : "app shell" désigne le HTML/CSS/JS de l'application elle-même (pages Next.js prérendues, polices, styles), précaché par Serwist. `data/catalogue.json` n'en fait PAS partie (AC #3) — c'est une donnée applicative, pas un asset de shell.
+- **Aucune nouvelle logique métier testable unitairement** : contrairement aux stories précédentes, cette story ne touche à aucun hook/composant React existant avec de la logique conditionnelle — Task 6.1 valide uniquement la non-régression, pas de nouveaux tests unitaires Vitest ne sont attendus pour le service worker/manifest eux-mêmes (ce sont des artefacts de configuration/build, hors du périmètre de Vitest+Testing Library). La validation se fait par inspection du build (Task 5), pas par des assertions de test automatisées.
+
+### Architecture Compliance
+
+- **AD-2** (fraîcheur du Catalogue à source unique) : le service worker DOIT exclure explicitement `raw.githubusercontent.com` de tout precache/runtime-cache (AC #3, Task 2.2). C'est l'exigence architecturale non-négociable de cette story.
+- **AD-4** (frontière Client Component / export statique, aucun code serveur applicatif) : le choix du mode configurateur Serwist (Task 1.1) est directement dicté par cette contrainte — le mode Turbopack classique nécessiterait une route serveur dynamique, incompatible avec `output: 'export'`.
+- Aucun autre AD (AD-1, AD-3, AD-5 à AD-8) n'est concerné par cette story — elle ne touche ni `lib/tasted/`, ni `lib/schema/`, ni le scraper, ni la logique de dégradation réseau de `lib/catalogue/` elle-même (seulement son URL distante côté service worker).
+
+### Library / Framework Requirements
+
+- **Nouvelles dépendances (dev)** : `@serwist/next`, `@serwist/cli`, `serwist`, `esbuild`, `concurrently` — toutes en `devDependencies` (le service worker est un artefact de build, aucune de ces libs n'est un import runtime de l'application React elle-même, à l'exception du `SerwistProvider` de `@serwist/next/react` utilisé dans `app/layout.tsx`, qui doit lui être en dépendance de production si le import se fait au niveau du layout — vérifier lors de l'implémentation si `@serwist/next` doit être promu en dépendance de production selon la façon dont l'import est résolu au build).
+- Cf. `ARCHITECTURE-SPINE.md` : `Serwist (@serwist/next) | dernière (PWA/service worker, successeur maintenu de next-pwa)` — version "dernière" au moment de l'implémentation, pas de version pinnée spécifique par l'architecture (contrairement à Next.js/React qui sont pinnés).
+
+### File Structure Requirements
+
+- `app/sw.ts` — NOUVEAU (service worker source, compilé par `serwist build`).
+- `serwist.config.js` — NOUVEAU (config du mode configurateur Serwist, cf. `ARCHITECTURE-SPINE.md` qui prévoit `sw.ts` à la racine du Structural Seed — le fichier de config Serwist lui-même n'y est pas explicitement listé mais est requis par le mode configurateur).
+- `public/manifest.json` — NOUVEAU (cf. Structural Seed de l'architecture qui le prévoit explicitement : "manifest.json # PWA").
+- `public/icons/` — NOUVEAU (icônes PWA 192×192 et 512×512 minimum).
+- `public/sw.js`, `public/sw*`, `public/swe-worker*` — GÉNÉRÉS par `serwist build`, ne jamais committer (ajout à `.gitignore`).
+- `.gitignore` — MODIFIER (ajout des patterns Serwist ci-dessus).
+- `tsconfig.json` — MODIFIER (types `@serwist/next/typings`, lib `webworker`, exclude `public/sw.js`).
+- `package.json` — MODIFIER (script `build` étendu avec `&& serwist build`, nouvelles devDependencies).
+- `app/layout.tsx` — MODIFIER (ajout `metadata.manifest`, `metadata.appleWebApp`, `metadata.formatDetection`, `SerwistProvider` autour des children).
+- Ne pas toucher `lib/catalogue/`, `lib/tasted/`, `lib/schema/`, `components/catalogue/*`, `scripts/` — hors scope de cette story (aucune AC ne les concerne ; seule l'URL distante qu'ils utilisent est référencée, en lecture seule, depuis `app/sw.ts` pour l'exclusion de cache).
+
+### Testing Requirements
+
+- Pas de nouveaux tests Vitest/Testing Library attendus pour le service worker ou le manifest eux-mêmes (artefacts de build/config statiques, hors du périmètre applicatif testé jusqu'ici). La validation de cette story se fait par **inspection du build** (Task 5 : présence et contenu de `public/sw.js`/`out/sw.js`, présence de `out/manifest.json`, présence de la règle d'exclusion `raw.githubusercontent.com` dans le SW généré) plutôt que par des assertions automatisées.
+- Le seul impératif de test est la **non-régression** : la suite Vitest existante (179/180 tests selon Story 1.7) doit rester 100% verte après ajout de `SerwistProvider`/métadonnées dans `app/layout.tsx` — vérifier notamment qu'`app/page.test.tsx` (qui teste potentiellement le rendu de `app/layout.tsx` ou de composants qui en dépendent) n'est pas cassé par l'ajout du `SerwistProvider`.
+
+## Previous Story Intelligence
+
+- **Story 1.7** (`5407e3b` implémentation, `8fe31d3` code review) a été la dernière story avant celle-ci — elle a étendu `lib/catalogue/index.ts` avec le signal `isOffline` et corrigé un bug de reset lors d'une revalidation réussie mais ignorée comme périmée. Cette story 1.8 est indépendante fonctionnellement (elle ne touche pas à `lib/catalogue/index.ts` lui-même) mais **partage le même souci de non-régression sur le comportement offline** : le service worker ajouté par cette story ne doit surtout pas interférer avec le comportement `isOffline`/dégradation réseau déjà construit — d'où l'importance capitale de l'exclusion `raw.githubusercontent.com` (AC #3/AD-2), qui garantit que le service worker est totalement transparent vis-à-vis de `lib/catalogue/`.
+- Convention de message de commit établie sur toutes les stories précédentes : `feat(<scope>): story X.Y - <titre>` pour l'implémentation initiale (ex: `feat(catalogue): story 1.7 - états hors-ligne et microcopy`), `fix(<scope>): story X.Y code review - <résumé>` pour les corrections de revue — à suivre pour cette story, scope probable `feat(pwa): story 1.8 - pwa installable`.
+- Convention établie depuis Story 1.3 : toujours documenter tout écart ou piège technique rencontré explicitement dans les Completion Notes plutôt que de le corriger silencieusement — particulièrement important ici vu le piège de build déjà identifié par l'architecture (issue vercel/next.js#73457).
+- Aucune story précédente n'a modifié `app/layout.tsx` de façon significative (Story 1.1 l'a créé) — cette story est la première à y ajouter de la logique (métadonnées PWA, `SerwistProvider`) depuis l'initialisation du projet.
+
+## Git Intelligence Summary
+
+- Commits récents pertinents : `8fe31d3` (revue de code Story 1.7, dernier commit avant cette story — baseline_commit de cette story), `5407e3b` (Story 1.7 initiale), aucun commit récent ne touche à `next.config.ts`, `package.json` (dépendances), ou `app/layout.tsx` — cette story est donc la première à modifier ces fichiers centraux depuis l'initialisation du projet (Story 1.1, `next.config.ts` : export statique déjà en place, cf. commentaire existant "La commande next export est dépréciée depuis Next.js 13+ ; ce flag suffit").
+- Aucune dépendance PWA/Serwist n'existe encore dans `package.json` — confirmé par inspection directe, aligné avec le caractère "nouveau" de cette story dans l'épopée.
+
+## Latest Technical Information
+
+- **Recherche effectuée sur la documentation officielle Serwist (serwist.pages.dev, 2026)** — trois modes d'intégration existent avec Next.js :
+  1. Mode classique webpack (`@serwist/next`, `withSerwistInit`) — pour projets utilisant encore webpack.
+  2. Mode Turbopack (`@serwist/turbopack`) — nécessite un Route Handler serveur, **incompatible avec `output: 'export'`**.
+  3. **Mode configurateur** (`@serwist/next/config` + `@serwist/cli`, script `serwist build` après `next build`) — bundler-agnostique, seul mode capable de précacher les routes prérendues d'un export statique après coup. **C'est le mode retenu pour cette story.**
+- **Next.js 16 utilise Turbopack comme bundler par défaut** (stable depuis Next.js 16, cf. next.js.org/blog/next-16) — ce qui renforce le choix du mode configurateur Serwist (bundler-agnostique) plutôt que d'essayer de forcer un mode webpack legacy.
+- Template de service worker Serwist standard : `Serwist` avec `precacheEntries: self.__SW_MANIFEST`, `skipWaiting: true`, `clientsClaim: true`, `navigationPreload: true`, `runtimeCaching` basé sur `defaultCache` de `@serwist/next/worker` (à filtrer/étendre pour exclure `raw.githubusercontent.com`, cf. Task 2).
+- `SerwistProvider` (`@serwist/next/react`) est le composant officiel recommandé pour l'enregistrement client du service worker en mode configurateur, à placer dans `app/layout.tsx`.
+
+## Project Context Reference
+
+- Aucun `project-context.md` n'a été détecté dans le repo (cohérent avec toutes les stories précédentes). Toute la context intelligence exploitable pour Story 1.8 provient des artefacts BMad (`epics.md`, `ARCHITECTURE-SPINE.md`), de la documentation officielle Serwist consultée directement (serwist.pages.dev), du code courant (`next.config.ts`, `app/layout.tsx`, `app/globals.css`, `package.json`) et de l'historique Git récent.
+
+## Dev Agent Record
+
+### Agent Model Used
+
+Claude Sonnet 5 (GitHub Copilot CLI)
+
+### Debug Log References
+
+- **Piège de build confirmé (issue vercel/next.js#73457, documenté dans l'architecture)** : le pipeline initial `next build && serwist build` produisait bien `public/sw.js`, mais celui-ci **n'apparaissait pas dans `out/`** — parce que l'export statique (`output: 'export'`) copie le contenu de `public/` vers `out/` pendant l'étape `next build`, **avant** que `serwist build` (qui s'exécute après) n'écrive `public/sw.js`. Confirmé par inspection directe : `ls out/` ne listait ni `sw.js` ni de nouvelle entrée après un premier build complet, alors que `public/sw.js` existait bien avec un contenu non-vide (25 URLs précachées, 1.12 MB). **Solution appliquée** : ajout d'une étape de copie explicite en fin de script `build` (`cp public/sw.js out/sw.js`), après quoi `out/sw.js` est bien présent et contient la règle d'exclusion `raw.githubusercontent.com` (vérifié par `grep`). Pas de contournement de `output: 'export'` — la contrainte AD-4 reste respectée.
+- Tentative de renommer `serwist.config.js` en `.mjs` pour éliminer un warning bénin de Node ("Module type of file... is not specified") — **échec** : `@serwist/cli` résout `serwist.config.js` par nom de fichier exact, indépendamment de l'extension déclarée dans `package.json`. Fichier renommé en `.js` (nom attendu par l'outil) ; le warning Node est cosmétique (pas d'échec de build) et laissé tel quel plutôt que d'introduire `"type": "module"` dans `package.json` (risque de casser d'autres configs CJS existantes, ex: `vitest.config.ts`).
+- ESLint échouait initialement avec 1 erreur + 89 warnings sur le contenu minifié de `public/sw.js` (fichier généré, jamais committé) — corrigé en ajoutant `public/sw.js`/`public/swe-worker*` aux `globalIgnores` d'`eslint.config.mjs`, cohérent avec le traitement déjà réservé à `.next/`/`out/`/`build/`.
+
+### Completion Notes List
+
+- **Task 1** (installation Serwist, mode configurateur) : dépendances de dev ajoutées (`@serwist/next`, `@serwist/cli`, `serwist`, `esbuild`, `concurrently`). Choix du mode configurateur confirmé par recherche documentaire officielle (serwist.pages.dev) : le mode classique (webpack) et le mode Turbopack (route handler serveur dynamique) sont tous deux écartés — le premier ne voit pas les routes prérendues d'un export statique, le second est structurellement incompatible avec `output: 'export'` (AD-4, aucune route serveur possible). `serwist.config.js` créé à la racine (`swSrc: app/sw.ts`, `swDest: public/sw.js`, une entrée `additionalPrecacheEntries` pour `/manifest.json`). Script `build` étendu à `next build && serwist build && cp public/sw.js out/sw.js` (la copie finale corrige le piège de build documenté, cf. Debug Log). `.gitignore` et `tsconfig.json` mis à jour conformément aux Subtasks 1.4/1.5.
+- **Task 2** (service worker, exclusion Catalogue) : `app/sw.ts` créé avec le template Serwist standard (`skipWaiting`, `clientsClaim`, `navigationPreload`). Audit de `defaultCache` (`@serwist/next/worker`) : la règle générique `/\.(?:json|xml|csv)$/i` (handler `NetworkFirst`, cache `static-data-assets`) **matcherait** `data/catalogue.json` si elle n'était pas neutralisée — confirmé par lecture directe du bundle `node_modules/@serwist/next/dist/index.worker.mjs`. Solution : règle d'exclusion explicite `{ matcher: ({ url }) => url.hostname === "raw.githubusercontent.com", handler: new NetworkOnly() }` placée **en tête** du tableau `runtimeCaching` (avant le spread de `defaultCache`), garantissant qu'elle est évaluée en priorité (les routes Serwist/Workbox retiennent le premier match). Vérifié dans le bundle final `out/sw.js` (grep positif sur `raw.githubusercontent.com`). Toutes les autres règles de `defaultCache` (polices, images, JS/CSS Next.js, audio/vidéo) sont conservées telles quelles — aucune ne cible spécifiquement le Catalogue, seul le fallback JSON générique nécessitait cette exclusion. Aucun fallback offline (`/~offline`) ajouté, conformément à la Subtask 2.4 (hors scope).
+- **Task 3** (manifest PWA) : `public/manifest.json` créé avec `name`/`short_name: "Crounch"`, `start_url: "/"`, `display: "standalone"`, `orientation: "portrait"`, `background_color`/`theme_color: "#fdf0dd"` (réutilise le token `--background` existant d'`app/globals.css`, aucune couleur inventée). Icônes PWA : **aucun asset de marque Crounch n'existait dans le repo** ; conformément à la décision utilisateur prise avant l'implémentation (improviser un visuel basé sur la palette existante), une icône simple a été générée programmatiquement — cercle `--primary` (#dda138) sur fond `--background` (#fdf0dd) avec l'initiale "C" en blanc cassé, dessinée en SVG (`public/icons/icon-source.svg`) puis rasterisée en PNG 192×192 et 512×512 via `sharp` (déjà présent en dépendance transitive de Next.js, aucune nouvelle dépendance ajoutée). `app/layout.tsx` mis à jour : `metadata.manifest = "/manifest.json"`, `metadata.appleWebApp`, `metadata.formatDetection.telephone: false` (requis pour une installation correcte sur iOS Safari, le manifest seul étant insuffisant sur cette plateforme).
+- **Task 4** (enregistrement client) : `SerwistProvider` (`@serwist/next/react`) ajouté dans `app/layout.tsx`, enveloppant `children` avec `swUrl="/sw.js"`. Le composant porte déjà `"use client"` en interne (vérifié dans son code source), donc son utilisation dans le layout serveur ne casse pas la frontière Client Component (AD-4). Décision : ne pas désactiver le service worker en développement (`disable`) — aucun problème de dev observé pendant l'implémentation ; à revisiter si des frictions apparaissent en usage réel (`npm run dev`).
+- **Task 5** (pipeline de build) : piège documenté par l'architecture (issue vercel/next.js#73457) effectivement rencontré et corrigé — voir Debug Log ci-dessus pour le détail complet. Après correction : `public/sw.js` généré (confirmé non-vide, 25 URLs précachées/1.12 MB), `out/sw.js` présent et contenant la règle d'exclusion `raw.githubusercontent.com`, `out/manifest.json` présent, et `out/index.html` référence bien `/manifest.json` (confirmé par `grep`).
+- **Task 6** (validation complète) : 180/180 tests Vitest verts (aucune régression, aucun nouveau test unitaire requis — cette story n'introduit aucune logique métier React testable, conformément aux Testing Requirements de la story). Lint : 0 erreur après ajout de `public/sw.js`/`public/swe-worker*` aux `globalIgnores` d'ESLint (le fichier généré/minifié n'est pas du code source applicatif) — seuls les 2 warnings `@next/next/no-img-element` déjà connus/acceptés subsistent. Build : succès, export statique intact (`○ (Static)`), `sw.js`/`manifest.json`/icônes tous présents dans `out/` après correction du script de build.
+
+### File List
+
+- `package.json` — MODIFIER (nouvelles devDependencies Serwist ; script `build` étendu avec `serwist build` puis copie `sw.js` vers `out/`).
+- `package-lock.json` — MODIFIER (généré par `npm install`).
+- `serwist.config.js` — NOUVEAU (config du mode configurateur Serwist).
+- `app/sw.ts` — NOUVEAU (source du service worker, exclusion explicite `raw.githubusercontent.com`).
+- `public/manifest.json` — NOUVEAU (manifest PWA).
+- `public/icons/icon-source.svg` — NOUVEAU (source SVG de l'icône générée).
+- `public/icons/icon-192x192.png` — NOUVEAU (icône PWA 192×192).
+- `public/icons/icon-512x512.png` — NOUVEAU (icône PWA 512×512).
+- `app/layout.tsx` — MODIFIER (métadonnées PWA : `manifest`, `appleWebApp`, `formatDetection` ; `SerwistProvider` autour des children).
+- `.gitignore` — MODIFIER (ajout `public/sw*`, `public/swe-worker*`).
+- `tsconfig.json` — MODIFIER (`types: ["@serwist/next/typings"]`, `lib` étendu avec `webworker`, `exclude` étendu avec `public/sw.js`).
+- `eslint.config.mjs` — MODIFIER (ajout de `public/sw.js`/`public/swe-worker*` aux `globalIgnores`, non prévu explicitement par la story mais requis pour que Task 6.2/Subtask 6.2 passe sans erreur sur un artefact de build généré).
+
+## Change Log
+
+- 2026-08-07 : Implémentation initiale de la Story 1.8 (PWA installable) — Serwist en mode configurateur, service worker avec exclusion explicite du Catalogue distant (AD-2), manifest PWA + icônes générées, enregistrement client via `SerwistProvider`, correction du piège de build documenté (issue vercel/next.js#73457). Statut → `review`.

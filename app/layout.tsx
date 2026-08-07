@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
+import { SerwistProvider } from "@serwist/next/react";
 import "./globals.css";
 
 // Inter remplace Geist Sans pour le corps de texte — police système
@@ -18,6 +19,15 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Crounch",
   description: "Suivi de dégustation des saveurs Brets",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Crounch",
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export default function RootLayout({
@@ -30,7 +40,9 @@ export default function RootLayout({
       lang="fr"
       className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <SerwistProvider swUrl="/sw.js">{children}</SerwistProvider>
+      </body>
     </html>
   );
 }

@@ -1,0 +1,22 @@
+{
+  "name": "Crounch",
+  "short_name": "Crounch",
+  "description": "Suivi de dégustation des saveurs Brets",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fdf0dd",
+  "theme_color": "#fdf0dd",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
