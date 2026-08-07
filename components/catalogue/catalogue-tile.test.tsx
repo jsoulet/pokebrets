@@ -75,7 +75,7 @@ describe("CatalogueTile", () => {
     );
 
     expect(screen.getByText("Poivre Sauvage")).toBeInTheDocument();
-    expect(screen.getByText(/archiv/i)).toBeInTheDocument();
+    expect(screen.getByText(/n'est plus produite/i)).toBeInTheDocument();
   });
 
   it("does not show a tasted badge when isTasted is false", () => {
@@ -198,7 +198,7 @@ describe("CatalogueTile", () => {
       />,
     );
 
-    expect(screen.getByText(/archiv/i)).toBeInTheDocument();
+    expect(screen.getByText(/n'est plus produite/i)).toBeInTheDocument();
     expect(screen.getByText(/goûtée/i)).toBeInTheDocument();
   });
 

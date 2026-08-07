@@ -62,7 +62,7 @@ describe("FlavorDetailDialog", () => {
       />,
     );
 
-    expect(screen.getByText(/archiv/i)).toBeInTheDocument();
+    expect(screen.getByText(/n'est plus produite/i)).toBeInTheDocument();
   });
 
   it("renders a toggle button reflecting isTasted state", () => {

@@ -19,9 +19,17 @@ export type UseCatalogueResult = {
   status: CatalogueStatus;
   error: string | null;
   retry: () => void;
+  // Story 1.7 (AC #1, UX-DR12) : vrai uniquement quand une révision de
+  // Catalogue est déjà détenue ET que le dernier rafraîchissement en
+  // arrière-plan a échoué (network, non-2xx ou JSON invalide — cf. AD-3,
+  // les trois causes sont traitées identiquement). Ne diagnostique jamais
+  // `navigator.onLine` : reflète seulement "la dernière synchronisation a
+  // échoué, le Catalogue affiché peut être périmé". Jamais vrai tant
+  // qu'aucun cache n'existe (dans ce cas `status === "error"` s'applique).
+  isOffline: boolean;
 };
 
-const ERROR_MESSAGE = "Impossible de charger le catalogue, vérifie ta connexion";
+const ERROR_MESSAGE = "Impossible de charger le catalogue pour l'instant. Réessaie avec une connexion.";
 
 export function useCatalogue(): UseCatalogueResult {
   // Subtask 4.1/4.2: le cache est lu une seule fois, en initialiseur paresseux
@@ -30,6 +38,9 @@ export function useCatalogue(): UseCatalogueResult {
   const [data, setData] = useState<Catalogue | null>(() => readCache());
   const [status, setStatus] = useState<CatalogueStatus>(() => (data !== null ? "ready" : "loading"));
   const [error, setError] = useState<string | null>(null);
+  // Story 1.7 (AC #1) : signal de lecture pur, dérivé exclusivement à
+  // l'intérieur de ce hook (AD-2) — jamais recalculé ailleurs.
+  const [isOffline, setIsOffline] = useState(false);
 
   // Révision actuellement détenue (cache ou dernière réponse appliquée) —
   // sert de référence pour la comparaison monotone (Subtask 4.3/4.4, AC #4).
@@ -54,6 +65,11 @@ export function useCatalogue(): UseCatalogueResult {
         // le cache reste affiché intact. Aucune donnée n'existait -> error.
         setStatus((prevStatus) => (prevStatus === "loading" ? "error" : prevStatus));
         setError((prevError) => (currentRevisionRef.current === null ? ERROR_MESSAGE : prevError));
+        // Story 1.7 (AC #1) : un cache existant + échec de rafraîchissement
+        // en arrière-plan est précisément le cas "hors ligne" à signaler à
+        // l'UI — jamais vrai quand aucune révision n'est encore détenue
+        // (ce cas relève de `status === "error"`, AC #2).
+        setIsOffline(currentRevisionRef.current !== null);
         return;
       }
 
@@ -78,6 +94,7 @@ export function useCatalogue(): UseCatalogueResult {
       setData(result.data);
       setStatus("ready");
       setError(null);
+      setIsOffline(false);
     });
   }, []);
 
@@ -98,6 +115,6 @@ export function useCatalogue(): UseCatalogueResult {
     revalidate();
   }, [revalidate]);
 
-  return { data, status, error, retry };
+  return { data, status, error, isOffline, retry };
 }
 

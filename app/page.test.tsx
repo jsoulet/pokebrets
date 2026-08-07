@@ -23,7 +23,7 @@ const mockedUseTasted = vi.mocked(useTasted);
 describe("Home page", () => {
   beforeEach(() => {
     mockedUseCatalogue.mockReset();
-    mockedUseCatalogue.mockReturnValue({ data: null, status: "loading", error: null, retry: vi.fn() });
+    mockedUseCatalogue.mockReturnValue({ data: null, status: "loading", error: null, isOffline: false, retry: vi.fn() });
     mockedUseTasted.mockReset();
     mockedUseTasted.mockReturnValue({
       tastedIds: new Set(),

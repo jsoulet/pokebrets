@@ -48,7 +48,7 @@ export function CatalogueTile({ flavor, isTasted, onToggle, onOpenDetail }: Cata
           // chip-tile-archived) ; le badge reprend le fond neutre pour rester
           // visible par-dessus plutôt que de s'y fondre.
           <span className="bg-background text-foreground/80 rounded-full px-2 py-0.5 text-xs">
-            Archivée
+            Cette saveur n&apos;est plus produite
           </span>
         ) : null}
       </button>

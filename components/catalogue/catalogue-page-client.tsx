@@ -18,7 +18,7 @@ import { FlavorDetailDialog } from "./flavor-detail-dialog";
 // l'état d'ouverture dans chaque tuile et pour garder l'annonce `aria-live`
 // et la mutation goûté/pas goûté centralisées en un seul endroit.
 export function CataloguePageClient() {
-  const { data, status, error, retry } = useCatalogue();
+  const { data, status, error, isOffline, retry } = useCatalogue();
   const { tastedIds, toggleTasted } = useTasted();
 
   // Annonce lecteur d'écran du changement d'état (AC #5, UX-DR14) : une
@@ -103,6 +103,18 @@ export function CataloguePageClient() {
 
   return (
     <div className="flex w-full flex-col items-center gap-2">
+      {isOffline ? (
+        // Story 1.7 (AC #1) : bannière discrète, non-bloquante — le
+        // Catalogue en cache reste affiché et le toggle goûté/pas goûté
+        // reste pleinement utilisable (Subtask 2.3). `role="status"` (pas
+        // `role="alert"`) car ce n'est jamais un état urgent/bloquant.
+        <p
+          role="status"
+          className="bg-muted text-muted-foreground rounded-lg px-3 py-1.5 text-sm"
+        >
+          Hors ligne — dernière version connue affichée
+        </p>
+      ) : null}
       <p className="text-foreground text-sm font-medium">
         {tastedInCatalogueCount}/{flavors.length} saveurs goûtées
       </p>

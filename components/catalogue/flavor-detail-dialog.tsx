@@ -58,7 +58,7 @@ export function FlavorDetailDialog({
         <DialogTitle>{flavor.name}</DialogTitle>
         <DialogDescription>
           {/* Statut porté textuellement, jamais seulement par une couleur (UX-DR14). */}
-          {isArchived ? "Archivée" : "Active"}
+          {isArchived ? "Cette saveur n'est plus produite" : "Active"}
         </DialogDescription>
         <Button
           type="button"

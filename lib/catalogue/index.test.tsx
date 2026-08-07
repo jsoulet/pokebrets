@@ -100,6 +100,7 @@ describe("useCatalogue", () => {
 
     expect(result.current.status).toBe("ready");
     expect(result.current.data).toEqual(olderCatalogue);
+    expect(result.current.isOffline).toBe(false);
 
     // Let the background revalidation settle without throwing/erroring.
     await act(async () => {
@@ -109,6 +110,7 @@ describe("useCatalogue", () => {
     expect(result.current.status).toBe("ready");
     expect(result.current.data).toEqual(olderCatalogue);
     expect(result.current.error).toBeNull();
+    expect(result.current.isOffline).toBe(true);
   });
 
   it("Subtask 5.5: cache existing + revalidation non-2xx -> cache kept intact", async () => {
@@ -123,6 +125,7 @@ describe("useCatalogue", () => {
 
     expect(result.current.status).toBe("ready");
     expect(result.current.data).toEqual(olderCatalogue);
+    expect(result.current.isOffline).toBe(true);
   });
 
   it("Subtask 5.5: cache existing + revalidation invalid JSON -> cache kept intact", async () => {
@@ -142,6 +145,38 @@ describe("useCatalogue", () => {
 
     expect(result.current.status).toBe("ready");
     expect(result.current.data).toEqual(olderCatalogue);
+    expect(result.current.isOffline).toBe(true);
+  });
+
+  it("Story 1.7: isOffline stays false while no cache exists yet (pure loading/error state, not the offline banner case)", async () => {
+    vi.mocked(fetch).mockRejectedValueOnce(new Error("Failed to fetch"));
+
+    const { result } = renderHook(() => useCatalogue());
+
+    expect(result.current.isOffline).toBe(false);
+
+    await waitFor(() => expect(result.current.status).toBe("error"));
+    expect(result.current.isOffline).toBe(false);
+  });
+
+  it("Story 1.7: isOffline resets to false once a subsequent revalidation succeeds", async () => {
+    localStorage.setItem(CATALOGUE_CACHE_KEY, JSON.stringify(olderCatalogue));
+    vi.mocked(fetch).mockRejectedValueOnce(new Error("Failed to fetch"));
+
+    const { result } = renderHook(() => useCatalogue());
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(result.current.isOffline).toBe(true);
+
+    mockFetchOnce({ ok: true, json: async () => newerCatalogue });
+    act(() => {
+      result.current.retry();
+    });
+
+    await waitFor(() => expect(result.current.data).toEqual(newerCatalogue));
+    expect(result.current.isOffline).toBe(false);
   });
 
   it("Subtask 5.6: an older concurrent response arriving after a newer one is ignored", async () => {
