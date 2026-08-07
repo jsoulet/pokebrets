@@ -25,6 +25,9 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Crounch",
   },
+  icons: {
+    apple: "/icons/icon-192x192.png",
+  },
   formatDetection: {
     telephone: false,
   },
