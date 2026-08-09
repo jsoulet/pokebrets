@@ -8,6 +8,12 @@ import { CatalogueGrid } from "./catalogue-grid";
 import { CatalogueGridSkeleton } from "./catalogue-grid-skeleton";
 import { FlavorDetailDialog } from "./flavor-detail-dialog";
 
+// [Review] Filet zigzag façon bord de sachet ouvert (DESIGN.md >
+// components.section-divider) — extrait en constante nommée plutôt que
+// litéral inline dans le JSX, pour rester maintenable/relisible.
+const ZIGZAG_CLIP_PATH =
+  "polygon(0% 0%, 4% 100%, 8% 0%, 12% 100%, 16% 0%, 20% 100%, 24% 0%, 28% 100%, 32% 0%, 36% 100%, 40% 0%, 44% 100%, 48% 0%, 52% 100%, 56% 0%, 60% 100%, 64% 0%, 68% 100%, 72% 0%, 76% 100%, 80% 0%, 84% 100%, 88% 0%, 92% 100%, 96% 0%, 100% 100%, 100% 0%)";
+
 // Frontière Client Component (AD-4) : ce composant est le seul consommateur
 // de `useCatalogue()` (Story 1.3) et `useTasted()` (Story 1.5) de la page
 // d'accueil. Il ne fait que composer/projeter leurs deux contrats — jamais de
@@ -118,9 +124,40 @@ export function CataloguePageClient() {
       <p className="text-foreground text-sm font-medium">
         {tastedInCatalogueCount}/{flavors.length} saveurs goûtées
       </p>
+      {flavors.length > 0 ? (
+        // EXPERIENCE.md > Component Patterns : "Barre de progression /
+        // compteur" — le compteur texte ci-dessus reste la source de vérité
+        // du contenu annoncé (microcopy), cette barre n'ajoute qu'un rendu
+        // visuel synchronisé sur la même valeur. Non rendue à 0 Saveur pour
+        // éviter une barre 0/0 dénuée de sens (cf. deferred-work.md : état
+        // vide explicite du Catalogue).
+        <div
+          role="progressbar"
+          aria-valuenow={tastedInCatalogueCount}
+          aria-valuemin={0}
+          aria-valuemax={flavors.length}
+          aria-valuetext={`${tastedInCatalogueCount}/${flavors.length} saveurs goûtées`}
+          aria-label="Progression des saveurs goûtées"
+          className="bg-muted h-2 w-full max-w-xs overflow-hidden rounded-full"
+        >
+          <div
+            className="bg-primary h-full rounded-full"
+            style={{ width: `${(tastedInCatalogueCount / flavors.length) * 100}%` }}
+          />
+        </div>
+      ) : null}
       <div aria-live="polite" className="sr-only">
         {announcement}
       </div>
+      {/* DESIGN.md > components.section-divider : filet zigzag façon bord de
+          sachet ouvert, séparant le header (titre + progression) de la
+          grille — usage ponctuel réservé à cette seule transition de
+          section (jamais une simple bordure de carte). */}
+      <div
+        aria-hidden="true"
+        className="bg-primary h-3 w-full max-w-xs"
+        style={{ clipPath: ZIGZAG_CLIP_PATH }}
+      />
       <CatalogueGrid
         flavors={flavors}
         tastedIds={tastedIds}

@@ -146,6 +146,32 @@ describe("CataloguePageClient", () => {
     expect(screen.getByText("1/2 saveurs goûtées")).toBeInTheDocument();
   });
 
+  it("shows a visual progress bar synchronized with the progress counter once ready", () => {
+    mockedUseCatalogue.mockReturnValue({ data: catalogue, status: "ready", error: null, isOffline: false, retry: vi.fn() });
+    mockUseTasted({ tastedIds: new Set(["curry-doux"]), tastedCount: 1 });
+
+    render(<CataloguePageClient />);
+
+    const progressBar = screen.getByRole("progressbar", { name: /progression des saveurs goûtées/i });
+    expect(progressBar).toHaveAttribute("aria-valuenow", "1");
+    expect(progressBar).toHaveAttribute("aria-valuemin", "0");
+    expect(progressBar).toHaveAttribute("aria-valuemax", "2");
+    expect(progressBar).toHaveAttribute("aria-valuetext", "1/2 saveurs goûtées");
+    // Vérifie la synchronisation visuelle réelle (largeur calculée), pas
+    // seulement les attributs ARIA : un bug de calcul de `width` casserait
+    // ce test même si les attributs ARIA restaient corrects.
+    const fill = progressBar.firstElementChild as HTMLElement;
+    expect(fill.style.width).toBe("50%");
+  });
+
+  it("does not show the progress bar while loading", () => {
+    mockedUseCatalogue.mockReturnValue({ data: null, status: "loading", error: null, isOffline: false, retry: vi.fn() });
+
+    render(<CataloguePageClient />);
+
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+  });
+
   it("does not show the progress counter while loading", () => {
     mockedUseCatalogue.mockReturnValue({ data: null, status: "loading", error: null, isOffline: false, retry: vi.fn() });
 
