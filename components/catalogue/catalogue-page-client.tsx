@@ -9,18 +9,26 @@ import { CatalogueGridSkeleton } from "./catalogue-grid-skeleton";
 import { FlavorDetailDialog } from "./flavor-detail-dialog";
 
 // [Review] Filet zigzag façon bord de sachet ouvert (DESIGN.md >
-// components.section-divider). Motif CSS à dents de taille fixe en pixels
-// (et non un `clip-path` en pourcentage) : un `clip-path` avec un nombre de
-// dents figé s'étire sur les grands écrans (les dents s'aplatissent au lieu
-// de rester nettes) — ce motif se répète (`background-repeat: repeat-x`) à
-// taille constante quelle que soit la largeur du bandeau.
+// components.section-divider). Reproduit via un masque SVG (`mask-image`)
+// à taille de dent fixe en pixels plutôt qu'un `clip-path` en pourcentage
+// (qui s'étire/aplatit les dents sur les grands écrans) ou un dégradé CSS
+// à coins (`to bottom right/left`) — testé et rejeté car il produit des
+// dents en forme de "maison"/étoile tronquée plutôt que des triangles nets
+// (le stop à 50% d'un `linear-gradient` d'angle ne suit pas la diagonale
+// exacte voulue). Le masque SVG donne un contrôle exact du tracé
+// (triangle plein 0,0 → 14,14 → 28,0 → 28,14 → 0,14) et se répète
+// (`mask-repeat: repeat-x`) à taille constante. `bg-primary` reste porté
+// par l'élément (pas codé en dur dans le SVG) pour rester réactif au thème.
 const ZIGZAG_TOOTH_PX = 14;
-const ZIGZAG_BACKGROUND_STYLE = {
-  backgroundImage:
-    "linear-gradient(to bottom right, var(--primary) 50%, transparent 50%), linear-gradient(to bottom left, var(--primary) 50%, transparent 50%)",
-  backgroundPosition: `0 0, ${ZIGZAG_TOOTH_PX}px 0`,
-  backgroundSize: `${ZIGZAG_TOOTH_PX * 2}px ${ZIGZAG_TOOTH_PX}px`,
-  backgroundRepeat: "repeat-x",
+const ZIGZAG_MASK_SVG_URL =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 14' preserveAspectRatio='none'%3E%3Cpolygon points='0,0 14,14 28,0 28,14 0,14'/%3E%3C/svg%3E\")";
+const ZIGZAG_MASK_STYLE = {
+  maskImage: ZIGZAG_MASK_SVG_URL,
+  WebkitMaskImage: ZIGZAG_MASK_SVG_URL,
+  maskSize: `${ZIGZAG_TOOTH_PX * 2}px ${ZIGZAG_TOOTH_PX}px`,
+  WebkitMaskSize: `${ZIGZAG_TOOTH_PX * 2}px ${ZIGZAG_TOOTH_PX}px`,
+  maskRepeat: "repeat-x",
+  WebkitMaskRepeat: "repeat-x",
 } as const;
 
 // Frontière Client Component (AD-4) : ce composant est le seul consommateur
@@ -157,8 +165,8 @@ export function CataloguePageClient() {
           le bandeau qu'il prolonge, plutôt que contraint en `max-w-xs`. */}
       <div
         aria-hidden="true"
-        className="h-3.5 w-full flex-shrink-0"
-        style={ZIGZAG_BACKGROUND_STYLE}
+        className="bg-primary h-3.5 w-full flex-shrink-0"
+        style={ZIGZAG_MASK_STYLE}
       />
       {isOffline ? (
         // Story 1.7 (AC #1) : bannière discrète, non-bloquante, affichée
