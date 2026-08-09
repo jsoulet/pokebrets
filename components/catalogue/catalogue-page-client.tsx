@@ -21,7 +21,7 @@ import { FlavorDetailDialog } from "./flavor-detail-dialog";
 // par l'élément (pas codé en dur dans le SVG) pour rester réactif au thème.
 const ZIGZAG_TOOTH_PX = 14;
 const ZIGZAG_MASK_SVG_URL =
-  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 14' preserveAspectRatio='none'%3E%3Cpolygon points='0,0 14,14 28,0 28,14 0,14'/%3E%3C/svg%3E\")";
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 14' preserveAspectRatio='none'%3E%3Cpolygon points='0,14 14,0 28,14 28,0 0,0'/%3E%3C/svg%3E\")";
 const ZIGZAG_MASK_STYLE = {
   maskImage: ZIGZAG_MASK_SVG_URL,
   WebkitMaskImage: ZIGZAG_MASK_SVG_URL,
