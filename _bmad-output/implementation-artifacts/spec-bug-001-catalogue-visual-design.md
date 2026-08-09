@@ -123,3 +123,26 @@ Reuse the mockup's `.progress-bar`/`.progress-fill` div-pair pattern (not native
 
 - Progress bar test asserts real computed fill width, not just ARIA attributes.
   [`catalogue-page-client.test.tsx:149`](../../components/catalogue/catalogue-page-client.test.tsx#L149)
+
+## Correction complémentaire (2026-08-09)
+
+Le premier passage (accent texte + fine barre `max-w-xs`) était insuffisant : la
+comparaison au mockup montrait qu'il manquait le **bandeau plein écran**
+`bg-primary` (header du Catalogue, DESIGN.md > Colors + EXPERIENCE.md > Header
+du Catalogue) portant titre + compteur + barre, ainsi qu'un zigzag pleine
+largeur (pas `max-w-xs`). Corrections apportées :
+
+- Titre et compteur/barre déplacés dans un même bandeau `bg-primary` plein
+  écran (`catalogue-page-client.tsx`), toujours visible (y compris pendant le
+  chargement/hors-ligne, comme dans le mockup) ; suppression du `<h1>` en
+  double dans `page.tsx`.
+- Barre de progression : piste `bg-background/40` (translucide sur fond
+  moutarde) et remplissage `bg-success` (vert), reprenant les couleurs du
+  mockup plutôt que `bg-muted`/`bg-primary` (invisible sur fond de la même
+  couleur).
+- Zigzag et bandeau passés en largeur pleine (`w-full`), plus `max-w-xs`.
+- Bannière hors-ligne déplacée sous le bandeau/zigzag (fond crème), comme
+  dans le mockup, au lieu d'être au-dessus dans le bandeau moutarde.
+- 182/182 tests toujours verts sans modification (les tests ciblaient déjà le
+  contrat public : rôles ARIA, textes, pas le placement DOM), lint clean,
+  build validé.

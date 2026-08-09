@@ -50,23 +50,15 @@ export function CataloguePageClient() {
   // clic extérieur, bouton de fermeture explicite).
   const detailTriggerRef = useRef<HTMLButtonElement | null>(null);
 
-  if (status === "loading") {
-    return <CatalogueGridSkeleton />;
-  }
-
-  if (status === "error") {
-    return (
-      <div role="alert" className="flex flex-col items-center gap-3 p-8 text-center">
-        <p className="text-foreground">{error}</p>
-        <Button onClick={retry}>Réessayer</Button>
-      </div>
-    );
-  }
-
-  // status === "ready" : data est garanti non-null par le contrat du hook
-  // (Story 1.3) une fois "ready" atteint, que l'origine soit le cache local
-  // ou une réponse réseau fraîche — la UI n'a jamais à distinguer les deux.
-  const flavors = data?.flavors ?? [];
+  // [Review] Le header (bandeau moutarde, DESIGN.md > Colors + Header du
+  // Catalogue, EXPERIENCE.md) reste visible quel que soit `status` — comme
+  // dans le mockup (`.working/key-catalogue.html`), où le titre s'affiche
+  // aussi pendant le chargement/l'état hors-ligne. Seuls le compteur et la
+  // barre, qui dépendent des données, restent conditionnés à "ready". On ne
+  // fait donc plus de retour anticipé complet ici : `flavors` reste un
+  // tableau vide tant que `status !== "ready"` (data n'est garanti non-null
+  // par le contrat du hook, Story 1.3, qu'une fois "ready" atteint).
+  const flavors = status === "ready" ? (data?.flavors ?? []) : [];
 
   // Compteur de progression (AC #4, UX-DR10) : `X` dérivé par jointure sur les
   // `flavor.id` du Catalogue courant, jamais par un compte déconnecté du
@@ -108,73 +100,102 @@ export function CataloguePageClient() {
   }
 
   return (
-    <div className="flex w-full flex-col items-center gap-2">
-      {isOffline ? (
-        // Story 1.7 (AC #1) : bannière discrète, non-bloquante — le
-        // Catalogue en cache reste affiché et le toggle goûté/pas goûté
-        // reste pleinement utilisable (Subtask 2.3). `role="status"` (pas
-        // `role="alert"`) car ce n'est jamais un état urgent/bloquant.
-        <p
-          role="status"
-          className="bg-muted text-muted-foreground rounded-lg px-3 py-1.5 text-sm"
-        >
-          Hors ligne — dernière version connue affichée
-        </p>
-      ) : null}
-      <p className="text-foreground text-sm font-medium">
-        {tastedInCatalogueCount}/{flavors.length} saveurs goûtées
-      </p>
-      {flavors.length > 0 ? (
-        // EXPERIENCE.md > Component Patterns : "Barre de progression /
-        // compteur" — le compteur texte ci-dessus reste la source de vérité
-        // du contenu annoncé (microcopy), cette barre n'ajoute qu'un rendu
-        // visuel synchronisé sur la même valeur. Non rendue à 0 Saveur pour
-        // éviter une barre 0/0 dénuée de sens (cf. deferred-work.md : état
-        // vide explicite du Catalogue).
-        <div
-          role="progressbar"
-          aria-valuenow={tastedInCatalogueCount}
-          aria-valuemin={0}
-          aria-valuemax={flavors.length}
-          aria-valuetext={`${tastedInCatalogueCount}/${flavors.length} saveurs goûtées`}
-          aria-label="Progression des saveurs goûtées"
-          className="bg-muted h-2 w-full max-w-xs overflow-hidden rounded-full"
-        >
-          <div
-            className="bg-primary h-full rounded-full"
-            style={{ width: `${(tastedInCatalogueCount / flavors.length) * 100}%` }}
-          />
-        </div>
-      ) : null}
-      <div aria-live="polite" className="sr-only">
-        {announcement}
+    <div className="flex w-full flex-1 flex-col items-center">
+      {/* DESIGN.md > Colors (primary moutarde) + EXPERIENCE.md > Header du
+          Catalogue : bandeau plein écran, toujours visible (titre présent
+          même pendant le chargement/hors-ligne, cf. mockup), qui porte le
+          titre puis — une fois les données prêtes — le compteur/la barre de
+          progression dans la même bande de couleur. */}
+      <div className="bg-primary flex w-full flex-col items-center gap-1.5 px-5 pt-5 pb-5">
+        <h1 className="text-background text-3xl font-extrabold [-webkit-text-stroke:1px_var(--foreground)]">
+          Crounch
+        </h1>
+        {status === "ready" && flavors.length > 0 ? (
+          <>
+            <p className="text-foreground text-sm font-semibold">
+              {tastedInCatalogueCount}/{flavors.length} saveurs goûtées
+            </p>
+            {/* EXPERIENCE.md > Component Patterns : "Barre de progression /
+                compteur" — le compteur texte ci-dessus reste la source de
+                vérité du contenu annoncé (microcopy), cette barre n'ajoute
+                qu'un rendu visuel synchronisé sur la même valeur. Piste et
+                remplissage repris du mockup (piste translucide sur le fond
+                moutarde, remplissage `success` vert plutôt que `primary`
+                pour rester lisible sur ce fond). Non rendue à 0 Saveur pour
+                éviter une barre 0/0 dénuée de sens (cf. deferred-work.md :
+                état vide explicite du Catalogue). */}
+            <div
+              role="progressbar"
+              aria-valuenow={tastedInCatalogueCount}
+              aria-valuemin={0}
+              aria-valuemax={flavors.length}
+              aria-valuetext={`${tastedInCatalogueCount}/${flavors.length} saveurs goûtées`}
+              aria-label="Progression des saveurs goûtées"
+              className="bg-background/40 h-2 w-full overflow-hidden rounded-full"
+            >
+              <div
+                className="bg-success h-full rounded-full"
+                style={{ width: `${(tastedInCatalogueCount / flavors.length) * 100}%` }}
+              />
+            </div>
+          </>
+        ) : null}
       </div>
       {/* DESIGN.md > components.section-divider : filet zigzag façon bord de
           sachet ouvert, séparant le header (titre + progression) de la
           grille — usage ponctuel réservé à cette seule transition de
-          section (jamais une simple bordure de carte). */}
+          section (jamais une simple bordure de carte). Pleine largeur, comme
+          le bandeau qu'il prolonge, plutôt que contraint en `max-w-xs`. */}
       <div
         aria-hidden="true"
-        className="bg-primary h-3 w-full max-w-xs"
+        className="bg-primary h-3.5 w-full flex-shrink-0"
         style={{ clipPath: ZIGZAG_CLIP_PATH }}
       />
-      <CatalogueGrid
-        flavors={flavors}
-        tastedIds={tastedIds}
-        onToggleFlavor={handleToggleFlavor}
-        onOpenFlavorDetail={handleOpenFlavorDetail}
-      />
-      {displayedFlavor ? (
-        <FlavorDetailDialog
-          flavor={displayedFlavor}
-          open={selectedFlavorId !== null}
-          onOpenChange={handleDetailOpenChange}
-          onOpenChangeComplete={handleDetailOpenChangeComplete}
-          isTasted={tastedIds.has(displayedFlavor.id)}
-          onToggle={handleToggleFlavor}
-          finalFocusRef={detailTriggerRef}
-        />
+      {isOffline ? (
+        // Story 1.7 (AC #1) : bannière discrète, non-bloquante, affichée
+        // sous le bandeau/zigzag (fond crème) — le Catalogue en cache reste
+        // affiché et le toggle goûté/pas goûté reste pleinement utilisable
+        // (Subtask 2.3). `role="status"` (pas `role="alert"`) car ce n'est
+        // jamais un état urgent/bloquant.
+        <p
+          role="status"
+          className="bg-muted text-muted-foreground mx-4 mt-3 rounded-lg px-3 py-1.5 text-sm"
+        >
+          Hors ligne — dernière version connue affichée
+        </p>
+      ) : null}
+      <div aria-live="polite" className="sr-only">
+        {announcement}
+      </div>
+      {status === "loading" ? <CatalogueGridSkeleton /> : null}
+      {status === "error" ? (
+        <div role="alert" className="flex flex-col items-center gap-3 p-8 text-center">
+          <p className="text-foreground">{error}</p>
+          <Button onClick={retry}>Réessayer</Button>
+        </div>
+      ) : null}
+      {status === "ready" ? (
+        <>
+          <CatalogueGrid
+            flavors={flavors}
+            tastedIds={tastedIds}
+            onToggleFlavor={handleToggleFlavor}
+            onOpenFlavorDetail={handleOpenFlavorDetail}
+          />
+          {displayedFlavor ? (
+            <FlavorDetailDialog
+              flavor={displayedFlavor}
+              open={selectedFlavorId !== null}
+              onOpenChange={handleDetailOpenChange}
+              onOpenChangeComplete={handleDetailOpenChangeComplete}
+              isTasted={tastedIds.has(displayedFlavor.id)}
+              onToggle={handleToggleFlavor}
+              finalFocusRef={detailTriggerRef}
+            />
+          ) : null}
+        </>
       ) : null}
     </div>
   );
 }
+
