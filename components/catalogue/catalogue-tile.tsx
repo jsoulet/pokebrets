@@ -26,7 +26,7 @@ export function CatalogueTile({ flavor, isTasted, onToggle, onOpenDetail }: Cata
   const isArchived = flavor.status === "archived";
   return (
     <li
-      className={`${isArchived ? "bg-archived" : "bg-background"} relative rounded-3xl border-none`}
+      className={`${isArchived ? "bg-archived" : "bg-background"} relative rounded-2xl border-none`}
     >
       <button
         type="button"
@@ -42,12 +42,12 @@ export function CatalogueTile({ flavor, isTasted, onToggle, onOpenDetail }: Cata
         // "annoncé au clic sur le bouton".
         aria-label={flavor.name}
         onClick={() => onToggle(flavor.id)}
-        className="flex w-full flex-col items-center gap-2 rounded-3xl p-3 text-center"
+        className="flex w-full flex-col items-center gap-2 rounded-2xl p-3 text-center"
       >
         <img
           src={flavor.image}
           alt={flavor.name}
-          className="aspect-square w-full rounded-2xl object-cover"
+          className="aspect-square w-full rounded-xl object-cover"
           loading="lazy"
           onError={handleFlavorImageError}
         />

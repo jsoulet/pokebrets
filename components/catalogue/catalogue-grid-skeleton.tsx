@@ -13,7 +13,7 @@ export function CatalogueGridSkeleton() {
       {Array.from({ length: PLACEHOLDER_COUNT }, (_, index) => (
         <div
           key={index}
-          className="bg-muted aspect-square animate-pulse rounded-3xl"
+          className="bg-muted aspect-square animate-pulse rounded-2xl"
         />
       ))}
     </div>
