@@ -1,11 +1,13 @@
 import type { Flavor } from "@/lib/schema";
 import { CatalogueTile } from "./catalogue-tile";
 
-// Grille responsive : 2-3 colonnes mobile, 4-5 tablette, 6+ desktop, largeur
-// plafonnée pour éviter une grille "infinie" sur grand écran (UX-DR13, NFR1).
-// Reste un composant de projection pure (Story 1.5/1.6) : ne lit ni n'écrit
-// jamais `localStorage`, se contente de relayer `tastedIds`/`onToggleFlavor`
-// et `onOpenFlavorDetail` depuis la frontière client vers chaque tuile. Ne
+// Grille responsive : 2-3 colonnes mobile, 4 colonnes tablette/desktop
+// (jamais plus, décision produit explicite — prime sur EXPERIENCE.md >
+// Responsive & Platform qui suggérait "6+" en desktop), largeur plafonnée
+// pour éviter une grille "infinie" sur grand écran (UX-DR13, NFR1). Reste un
+// composant de projection pure (Story 1.5/1.6) : ne lit ni n'écrit jamais
+// `localStorage`, se contente de relayer `tastedIds`/`onToggleFlavor` et
+// `onOpenFlavorDetail` depuis la frontière client vers chaque tuile. Ne
 // possède aucun état d'ouverture de détail (Story 1.6) : ce dernier reste
 // centralisé dans `catalogue-page-client.tsx` pour rester une Dialog unique
 // contrôlée.
@@ -23,7 +25,7 @@ export function CatalogueGrid({
   onOpenFlavorDetail,
 }: CatalogueGridProps) {
   return (
-    <ul className="mx-auto grid w-full max-w-6xl grid-cols-3 gap-3 p-4 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7">
+    <ul className="mx-auto grid w-full max-w-6xl grid-cols-3 gap-3 p-4 md:grid-cols-4">
       {flavors.map((flavor) => (
         // Clé basée sur l'id stable de la Saveur, jamais l'index (AD-1).
         <CatalogueTile
