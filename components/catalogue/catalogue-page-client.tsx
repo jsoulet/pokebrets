@@ -9,10 +9,19 @@ import { CatalogueGridSkeleton } from "./catalogue-grid-skeleton";
 import { FlavorDetailDialog } from "./flavor-detail-dialog";
 
 // [Review] Filet zigzag façon bord de sachet ouvert (DESIGN.md >
-// components.section-divider) — extrait en constante nommée plutôt que
-// litéral inline dans le JSX, pour rester maintenable/relisible.
-const ZIGZAG_CLIP_PATH =
-  "polygon(0% 0%, 4% 100%, 8% 0%, 12% 100%, 16% 0%, 20% 100%, 24% 0%, 28% 100%, 32% 0%, 36% 100%, 40% 0%, 44% 100%, 48% 0%, 52% 100%, 56% 0%, 60% 100%, 64% 0%, 68% 100%, 72% 0%, 76% 100%, 80% 0%, 84% 100%, 88% 0%, 92% 100%, 96% 0%, 100% 100%, 100% 0%)";
+// components.section-divider). Motif CSS à dents de taille fixe en pixels
+// (et non un `clip-path` en pourcentage) : un `clip-path` avec un nombre de
+// dents figé s'étire sur les grands écrans (les dents s'aplatissent au lieu
+// de rester nettes) — ce motif se répète (`background-repeat: repeat-x`) à
+// taille constante quelle que soit la largeur du bandeau.
+const ZIGZAG_TOOTH_PX = 14;
+const ZIGZAG_BACKGROUND_STYLE = {
+  backgroundImage:
+    "linear-gradient(to bottom right, var(--primary) 50%, transparent 50%), linear-gradient(to bottom left, var(--primary) 50%, transparent 50%)",
+  backgroundPosition: `0 0, ${ZIGZAG_TOOTH_PX}px 0`,
+  backgroundSize: `${ZIGZAG_TOOTH_PX * 2}px ${ZIGZAG_TOOTH_PX}px`,
+  backgroundRepeat: "repeat-x",
+} as const;
 
 // Frontière Client Component (AD-4) : ce composant est le seul consommateur
 // de `useCatalogue()` (Story 1.3) et `useTasted()` (Story 1.5) de la page
@@ -107,7 +116,7 @@ export function CataloguePageClient() {
           titre puis — une fois les données prêtes — le compteur/la barre de
           progression dans la même bande de couleur. */}
       <div className="bg-primary flex w-full flex-col items-center gap-1.5 px-5 pt-5 pb-5">
-        <h1 className="text-background text-3xl font-extrabold [-webkit-text-stroke:1px_var(--foreground)]">
+        <h1 className="text-background text-3xl font-extrabold tracking-wide uppercase [-webkit-text-stroke:1px_var(--foreground)]">
           Crounch
         </h1>
         {status === "ready" && flavors.length > 0 ? (
@@ -148,8 +157,8 @@ export function CataloguePageClient() {
           le bandeau qu'il prolonge, plutôt que contraint en `max-w-xs`. */}
       <div
         aria-hidden="true"
-        className="bg-primary h-3.5 w-full flex-shrink-0"
-        style={{ clipPath: ZIGZAG_CLIP_PATH }}
+        className="h-3.5 w-full flex-shrink-0"
+        style={ZIGZAG_BACKGROUND_STYLE}
       />
       {isOffline ? (
         // Story 1.7 (AC #1) : bannière discrète, non-bloquante, affichée
