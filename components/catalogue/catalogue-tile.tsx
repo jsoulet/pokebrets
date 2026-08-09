@@ -26,7 +26,7 @@ export function CatalogueTile({ flavor, isTasted, onToggle, onOpenDetail }: Cata
   const isArchived = flavor.status === "archived";
   return (
     <li
-      className={`${isArchived ? "bg-archived" : "bg-background"} relative rounded-2xl border-none`}
+      className={`${isArchived ? "bg-archived" : "bg-background"} relative aspect-square rounded-2xl border-none`}
     >
       <button
         type="button"
@@ -42,22 +42,28 @@ export function CatalogueTile({ flavor, isTasted, onToggle, onOpenDetail }: Cata
         // "annoncé au clic sur le bouton".
         aria-label={flavor.name}
         onClick={() => onToggle(flavor.id)}
-        className="flex w-full flex-col items-center gap-2 rounded-2xl p-3 text-center"
+        className="flex h-full w-full flex-col items-center gap-1 rounded-2xl p-2 text-center"
       >
+        {/* DESIGN.md > chip-tile : la tuile entière reste un carré parfait
+            (façon bingo/pokédex, cf. EXPERIENCE.md), pas seulement l'image
+            — le nom occupe une bande fixe en bas plutôt que de s'ajouter
+            sous un carré, sans quoi la tuile devient un rectangle. */}
         <img
           src={flavor.image}
           alt={flavor.name}
-          className="aspect-square w-full rounded-xl object-cover"
+          className="min-h-0 w-full flex-1 rounded-xl object-cover"
           loading="lazy"
           onError={handleFlavorImageError}
         />
-        <span className="text-foreground line-clamp-2 text-sm font-medium">{flavor.name}</span>
+        <span className="text-foreground line-clamp-2 shrink-0 text-xs font-medium">
+          {flavor.name}
+        </span>
         {isArchived ? (
           // Badge archivée porté par du texte, pas seulement par la couleur (a11y).
           // La tuile archivée utilise déjà --archived en fond (DESIGN.md
           // chip-tile-archived) ; le badge reprend le fond neutre pour rester
           // visible par-dessus plutôt que de s'y fondre.
-          <span className="bg-background text-foreground/80 rounded-full px-2 py-0.5 text-xs">
+          <span className="bg-background text-foreground/80 shrink-0 rounded-full px-2 py-0.5 text-xs">
             Cette saveur n&apos;est plus produite
           </span>
         ) : null}

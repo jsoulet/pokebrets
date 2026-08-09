@@ -23,7 +23,7 @@ export function CatalogueGrid({
   onOpenFlavorDetail,
 }: CatalogueGridProps) {
   return (
-    <ul className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-3 p-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7">
+    <ul className="mx-auto grid w-full max-w-6xl grid-cols-3 gap-3 p-4 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7">
       {flavors.map((flavor) => (
         // Clé basée sur l'id stable de la Saveur, jamais l'index (AD-1).
         <CatalogueTile
