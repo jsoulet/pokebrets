@@ -55,7 +55,7 @@ export function CatalogueTile({ flavor, isTasted, onToggle, onOpenDetail }: Cata
           loading="lazy"
           onError={handleFlavorImageError}
         />
-        <span className="text-foreground line-clamp-2 shrink-0 text-xs font-medium">
+        <span className="text-foreground line-clamp-2 shrink-0 text-sm font-medium">
           {flavor.name}
         </span>
         {isArchived ? (

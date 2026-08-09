@@ -21,6 +21,13 @@ const NAMED_ENTITIES: Record<string, string> = {
   ugrave: "ù",
   icirc: "î",
   iuml: "ï",
+  rsquo: "\u2019",
+  lsquo: "\u2018",
+  rdquo: "\u201d",
+  ldquo: "\u201c",
+  hellip: "\u2026",
+  ndash: "\u2013",
+  mdash: "\u2014",
 };
 
 export function decodeHtmlEntities(input: string): string {

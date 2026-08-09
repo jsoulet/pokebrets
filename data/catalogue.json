@@ -111,7 +111,7 @@
     },
     {
       "id": "loriginale",
-      "name": "L&rsquo;Originale",
+      "name": "L’Originale",
       "image": "https://cms.brets.fr/app/uploads/2026/02/125g-originale-nut-b-recto.png",
       "status": "active"
     },
@@ -207,7 +207,7 @@
     },
     {
       "id": "lancienne",
-      "name": "À l&rsquo;Ancienne",
+      "name": "À l’Ancienne",
       "image": "https://cms.brets.fr/app/uploads/2026/02/brets-a-l_ancienne-125g-recto.png",
       "status": "active"
     },
@@ -219,7 +219,7 @@
     },
     {
       "id": "chevre-piment-despelette",
-      "name": "Chèvre & piment d&rsquo;Espelette",
+      "name": "Chèvre & piment d’Espelette",
       "image": "https://cms.brets.fr/app/uploads/2026/02/brets-chevre-piment-d_espelette-125g-recto.png",
       "status": "active"
     },
@@ -249,7 +249,7 @@
     },
     {
       "id": "aligot",
-      "name": "Aligot à l&rsquo;Aveyronnaise",
+      "name": "Aligot à l’Aveyronnaise",
       "image": "https://cms.brets.fr/app/uploads/2026/02/brets-aligot-125g-recto.png",
       "status": "active"
     },
@@ -273,7 +273,7 @@
     },
     {
       "id": "bleu-dauvergne-aop",
-      "name": "Bleu d&rsquo;Auvergne AOP",
+      "name": "Bleu d’Auvergne AOP",
       "image": "https://cms.brets.fr/app/uploads/2026/02/brets-bleu-auvergne-aop-125g-recto.png",
       "status": "active"
     },
