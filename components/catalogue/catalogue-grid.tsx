@@ -14,6 +14,7 @@ import { CatalogueTile } from "./catalogue-tile";
 type CatalogueGridProps = {
   flavors: Flavor[];
   tastedIds: ReadonlySet<Flavor["id"]>;
+  getRating: (id: Flavor["id"]) => number | undefined;
   onToggleFlavor: (id: Flavor["id"]) => void;
   onOpenFlavorDetail: (id: Flavor["id"], triggerElement: HTMLButtonElement) => void;
 };
@@ -21,17 +22,19 @@ type CatalogueGridProps = {
 export function CatalogueGrid({
   flavors,
   tastedIds,
+  getRating,
   onToggleFlavor,
   onOpenFlavorDetail,
 }: CatalogueGridProps) {
   return (
-    <ul className="mx-auto grid w-full max-w-6xl grid-cols-3 gap-3 p-4 md:grid-cols-4">
+    <ul className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-3 p-4 sm:grid-cols-3 sm:gap-6 sm:p-6 lg:grid-cols-4 lg:gap-12 lg:p-8">
       {flavors.map((flavor) => (
         // Clé basée sur l'id stable de la Saveur, jamais l'index (AD-1).
         <CatalogueTile
           key={flavor.id}
           flavor={flavor}
           isTasted={tastedIds.has(flavor.id)}
+          rating={getRating(flavor.id)}
           onToggle={onToggleFlavor}
           onOpenDetail={onOpenFlavorDetail}
         />

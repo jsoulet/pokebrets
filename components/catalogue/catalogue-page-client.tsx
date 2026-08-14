@@ -3,10 +3,16 @@
 import { useRef, useState } from "react";
 import { useCatalogue } from "@/lib/catalogue";
 import { useTasted } from "@/lib/tasted";
+import { useRating } from "@/lib/rating";
+import { useSortPreference } from "@/lib/sort-preference";
+import { useUntastedFilter } from "@/lib/untasted-filter";
+import { sortFlavors } from "@/lib/catalogue/sort";
 import { Button } from "@/components/ui/button";
 import { CatalogueGrid } from "./catalogue-grid";
 import { CatalogueGridSkeleton } from "./catalogue-grid-skeleton";
 import { FlavorDetailDialog } from "./flavor-detail-dialog";
+import { SortControl } from "./sort-control";
+import { UntastedFilterToggle } from "./untasted-filter-toggle";
 
 // [Review] Filet zigzag façon bord de sachet ouvert (DESIGN.md >
 // components.section-divider). Reproduit via un masque SVG (`mask-image`)
@@ -17,19 +23,31 @@ import { FlavorDetailDialog } from "./flavor-detail-dialog";
 // (le stop à 50% d'un `linear-gradient` d'angle ne suit pas la diagonale
 // exacte voulue). Le masque SVG donne un contrôle exact du tracé
 // (triangle plein 0,0 → 14,14 → 28,0 → 28,14 → 0,14) et se répète
-// (`mask-repeat: repeat-x`) à taille constante. `bg-primary` reste porté
-// par l'élément (pas codé en dur dans le SVG) pour rester réactif au thème.
+// (`mask-repeat: repeat-x`) à taille constante.
+// [Review] Passage de `mask` à `background-image` (SVG complet, couleur +
+// trait) : un `mask` ne peut porter qu'une couleur pleine découpée, jamais
+// de contour — impossible d'y ajouter la bordure noire de la DA brets.fr
+// (référence utilisateur) qui trace uniquement l'arête en dents de scie
+// (`polyline` ouverte, pas le polygone fermé, pour ne pas dessiner aussi un
+// trait sur la base plate invisible entre deux répétitions).
 const ZIGZAG_TOOTH_PX = 14;
-const ZIGZAG_MASK_SVG_URL =
-  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 14' preserveAspectRatio='none'%3E%3Cpolygon points='0,14 14,0 28,14 28,0 0,0'/%3E%3C/svg%3E\")";
-const ZIGZAG_MASK_STYLE = {
-  maskImage: ZIGZAG_MASK_SVG_URL,
-  WebkitMaskImage: ZIGZAG_MASK_SVG_URL,
-  maskSize: `${ZIGZAG_TOOTH_PX * 2}px ${ZIGZAG_TOOTH_PX}px`,
-  WebkitMaskSize: `${ZIGZAG_TOOTH_PX * 2}px ${ZIGZAG_TOOTH_PX}px`,
-  maskRepeat: "repeat-x",
-  WebkitMaskRepeat: "repeat-x",
+const ZIGZAG_COLOR = "%23ffc602";
+const ZIGZAG_BACKGROUND_SVG_URL = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 14' preserveAspectRatio='none'%3E%3Cpolygon points='0,14 14,0 28,14 28,0 0,0' fill='${ZIGZAG_COLOR}'/%3E%3Cpolyline points='0,14 14,0 28,14' fill='none' stroke='%23000000' stroke-width='2.5' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E")`;
+const ZIGZAG_BACKGROUND_STYLE = {
+  backgroundImage: ZIGZAG_BACKGROUND_SVG_URL,
+  backgroundSize: `${ZIGZAG_TOOTH_PX * 2}px ${ZIGZAG_TOOTH_PX}px`,
+  backgroundRepeat: "repeat-x",
 } as const;
+
+// Contour du titre "CROUNCH" (DESIGN.md > Colors, traitement "titre
+// contouré" de brets.fr) : une pile de `text-shadow` décalées à 1px sur
+// tout le pourtour plutôt qu'un simple `-webkit-text-stroke`, qui rendait
+// un contour plus fin/anguleux avec cette police display et manquait de
+// support hors Chromium/Safari. Une dernière couche, sans flou et décalée
+// en diagonale, ajoute l'ombre portée "dure" façon sticker/BD (cf. mockup
+// "LES CHIPS DE CRÊPES").
+const TITLE_TEXT_SHADOW =
+  "rgb(0, 0, 0) 2px 0px 0px, rgb(0, 0, 0) 1.75517px 0.958851px 0px, rgb(0, 0, 0) 1.0806px 1.68294px 0px, rgb(0, 0, 0) 0.141474px 1.99499px 0px, rgb(0, 0, 0) -0.832294px 1.81859px 0px, rgb(0, 0, 0) -1.60229px 1.19694px 0px, rgb(0, 0, 0) -1.97998px 0.28224px 0px, rgb(0, 0, 0) -1.87291px -0.701566px 0px, rgb(0, 0, 0) -1.30729px -1.5136px 0px, rgb(0, 0, 0) -0.421592px -1.95506px 0px, rgb(0, 0, 0) 0.567324px -1.91785px 0px, rgb(0, 0, 0) 1.41734px -1.41108px 0px, rgb(0, 0, 0) 1.92034px -0.558831px 0px, rgb(0, 0, 0) 6px 6px 0px";
 
 // Frontière Client Component (AD-4) : ce composant est le seul consommateur
 // de `useCatalogue()` (Story 1.3) et `useTasted()` (Story 1.5) de la page
@@ -43,6 +61,9 @@ const ZIGZAG_MASK_STYLE = {
 export function CataloguePageClient() {
   const { data, status, error, isOffline, retry } = useCatalogue();
   const { tastedIds, toggleTasted } = useTasted();
+  const { getRating, setRating } = useRating();
+  const { sortMode, setSortMode } = useSortPreference();
+  const { showOnlyUntasted, setShowOnlyUntasted } = useUntastedFilter();
 
   // Annonce lecteur d'écran du changement d'état (AC #5, UX-DR14) : une
   // région `aria-live="polite"` distincte plutôt que de faire reposer toute
@@ -77,12 +98,26 @@ export function CataloguePageClient() {
   // par le contrat du hook, Story 1.3, qu'une fois "ready" atteint).
   const flavors = status === "ready" ? (data?.flavors ?? []) : [];
 
+  // Ordre des transformations (Story 2.2/2.3) : Catalogue brut → tri →
+  // filtre goûté/non-goûté → grille. Le compteur de progression ci-dessous
+  // continue d'utiliser `flavors` (l'ensemble complet), jamais `sortedFlavors`
+  // ni `visibleFlavors` (AC #8 Story 2.3 — piège principal identifié).
+  const sortedFlavors = sortFlavors(flavors, sortMode, getRating);
+  const visibleFlavors = showOnlyUntasted
+    ? sortedFlavors.filter((flavor) => !tastedIds.has(flavor.id))
+    : sortedFlavors;
+
   // Compteur de progression (AC #4, UX-DR10) : `X` dérivé par jointure sur les
   // `flavor.id` du Catalogue courant, jamais par un compte déconnecté du
   // Catalogue (AD-1) — protège contre d'éventuelles clés orphelines dans
   // l'état persisté sans jamais le purger automatiquement.
   const tastedInCatalogueCount = flavors.filter((flavor) => tastedIds.has(flavor.id)).length;
   const displayedFlavor = flavors.find((flavor) => flavor.id === displayedFlavorId) ?? null;
+  // Story 2.3, AC #4 : distinct du cas "Catalogue vide" (scrape sans
+  // résultat, cf. deferred-work.md) — ici le Catalogue a des saveurs, mais
+  // le filtre actif n'en laisse aucune visible.
+  const showEmptyFilterState =
+    status === "ready" && showOnlyUntasted && visibleFlavors.length === 0 && flavors.length > 0;
 
   function handleToggleFlavor(id: string) {
     const flavor = flavors.find((candidate) => candidate.id === id);
@@ -91,6 +126,12 @@ export function CataloguePageClient() {
     if (flavor) {
       setAnnouncement(`${flavor.name}, ${nextIsTasted ? "goûtée" : "pas goûtée"}`);
     }
+  }
+
+  // Story 2.1, AC #5 : mutation totalement indépendante du toggle
+  // goûté/pas goûté — ne touche jamais `toggleTasted`/`setTasted`.
+  function handleRatingChange(id: string, value: number | null) {
+    setRating(id, value);
   }
 
   function handleOpenFlavorDetail(id: string, triggerElement: HTMLButtonElement) {
@@ -123,13 +164,16 @@ export function CataloguePageClient() {
           même pendant le chargement/hors-ligne, cf. mockup), qui porte le
           titre puis — une fois les données prêtes — le compteur/la barre de
           progression dans la même bande de couleur. */}
-      <div className="bg-primary flex w-full flex-col items-center gap-1.5 px-5 pt-5 pb-5">
-        <h1 className="text-background text-3xl font-extrabold tracking-wide uppercase [-webkit-text-stroke:1px_var(--foreground)]">
+      <div className="flex w-full flex-col items-center gap-4 bg-gradient-to-b from-[#FEB30E] to-[#ffc602] px-6 pt-14 pb-12">
+        <h1
+          className="text-background font-tanker text-[76px] leading-none tracking-wide uppercase sm:text-[128px]"
+          style={{ textShadow: TITLE_TEXT_SHADOW }}
+        >
           Crounch
         </h1>
         {status === "ready" && flavors.length > 0 ? (
           <>
-            <p className="text-foreground text-sm font-semibold">
+            <p className="text-foreground font-recoleta text-[30px] font-semibold">
               {tastedInCatalogueCount}/{flavors.length} saveurs goûtées
             </p>
             {/* EXPERIENCE.md > Component Patterns : "Barre de progression /
@@ -165,9 +209,25 @@ export function CataloguePageClient() {
           le bandeau qu'il prolonge, plutôt que contraint en `max-w-xs`. */}
       <div
         aria-hidden="true"
-        className="bg-primary h-3.5 w-full flex-shrink-0"
-        style={ZIGZAG_MASK_STYLE}
+        className="h-3.5 w-full flex-shrink-0"
+        style={ZIGZAG_BACKGROUND_STYLE}
       />
+      {status === "ready" && flavors.length > 0 ? (
+        // Story 2.2/2.3 : toolbar tri + filtre regroupés côte à côte (pas
+        // `justify-between`, qui les éloignait aux deux bouts et cassait la
+        // cohérence visuelle des deux boutons pilule), juste sous le
+        // zigzag, uniquement visible quand il y a des saveurs à trier/
+        // filtrer (pas de sens pendant le chargement/l'erreur).
+        <div className="flex w-full max-w-6xl flex-wrap items-center gap-4 px-6 pt-8 pb-6">
+          <SortControl value={sortMode} onChange={setSortMode} />
+          {/* Séparateur visuel : distingue le groupe "tri" (exclusif, une
+              seule valeur active) du groupe "filtre" (indépendant,
+              combinable avec n'importe quel tri) — sans lui les deux
+              pilules identiques laissaient croire à une 3e option de tri. */}
+          <div aria-hidden="true" className="bg-foreground/20 h-8 w-px" />
+          <UntastedFilterToggle checked={showOnlyUntasted} onCheckedChange={setShowOnlyUntasted} />
+        </div>
+      ) : null}
       {isOffline ? (
         // Story 1.7 (AC #1) : bannière discrète, non-bloquante, affichée
         // sous le bandeau/zigzag (fond crème) — le Catalogue en cache reste
@@ -193,12 +253,22 @@ export function CataloguePageClient() {
       ) : null}
       {status === "ready" ? (
         <>
-          <CatalogueGrid
-            flavors={flavors}
-            tastedIds={tastedIds}
-            onToggleFlavor={handleToggleFlavor}
-            onOpenFlavorDetail={handleOpenFlavorDetail}
-          />
+          {showEmptyFilterState ? (
+            // Story 2.3, AC #4 : message dédié positif plutôt qu'un espace
+            // vide silencieux — ton léger (UX-DR15), `role="status"` (pas
+            // une erreur, cf. bannière hors-ligne ci-dessus).
+            <p role="status" className="text-foreground p-8 text-center">
+              Bravo, tu as tout goûté ! 🎉
+            </p>
+          ) : (
+            <CatalogueGrid
+              flavors={visibleFlavors}
+              tastedIds={tastedIds}
+              getRating={getRating}
+              onToggleFlavor={handleToggleFlavor}
+              onOpenFlavorDetail={handleOpenFlavorDetail}
+            />
+          )}
           {displayedFlavor ? (
             <FlavorDetailDialog
               flavor={displayedFlavor}
@@ -207,6 +277,8 @@ export function CataloguePageClient() {
               onOpenChangeComplete={handleDetailOpenChangeComplete}
               isTasted={tastedIds.has(displayedFlavor.id)}
               onToggle={handleToggleFlavor}
+              rating={getRating(displayedFlavor.id)}
+              onRatingChange={handleRatingChange}
               finalFocusRef={detailTriggerRef}
             />
           ) : null}

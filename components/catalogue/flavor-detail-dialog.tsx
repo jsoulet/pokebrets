@@ -1,7 +1,9 @@
 import type { Flavor } from "@/lib/schema";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Toggle } from "@/components/ui/toggle";
+import { StarRating } from "./star-rating";
 import { handleFlavorImageError } from "./flavor-image-fallback";
+import { PILL_BUTTON_CLASSNAME } from "./pill-button-styles";
 
 // Composant de domaine (Story 1.6) : rend le détail agrandi d'une Saveur
 // dans une Dialog contrôlée. Ne possède JAMAIS son propre état "goûté/pas
@@ -19,6 +21,10 @@ type FlavorDetailDialogProps = {
   onOpenChange: (open: boolean) => void;
   isTasted: boolean;
   onToggle: (id: Flavor["id"]) => void;
+  // Story 2.1 : note indépendante du statut goûté/pas goûté (AD-1, AC #5) —
+  // `onRatingChange` ne touche jamais `onToggle` et réciproquement.
+  rating: number | undefined;
+  onRatingChange: (id: Flavor["id"], value: number | null) => void;
   // Élément vers lequel rendre le focus à la fermeture (le bouton info de la
   // tuile ayant ouvert la Dialog) — cf. Subtask 4.4, `Dialog.Popup.finalFocus`.
   finalFocusRef?: React.RefObject<HTMLElement | null>;
@@ -35,6 +41,8 @@ export function FlavorDetailDialog({
   onOpenChange,
   isTasted,
   onToggle,
+  rating,
+  onRatingChange,
   finalFocusRef,
   onOpenChangeComplete,
 }: FlavorDetailDialogProps) {
@@ -47,27 +55,41 @@ export function FlavorDetailDialog({
       onOpenChangeComplete={onOpenChangeComplete}
     >
       <DialogContent
+        className="items-center gap-3 text-center"
         finalFocus={() => (finalFocusRef?.current?.isConnected ? finalFocusRef.current : undefined)}
       >
+        {/* [Review] Restylage (retour utilisateur, référence brets.fr) :
+            micro-libellé "Saveur" + titre display centré en couleur accent
+            au-dessus de l'image, plutôt que le titre par défaut du Dialog
+            (petit, aligné à gauche, sans hiérarchie). */}
+        <span className="text-foreground/60 font-tanker text-sm tracking-[0.2em] uppercase">
+          Saveur
+        </span>
+        <DialogTitle className="font-tanker text-[52px] leading-[0.85] tracking-wide text-[#b5652e] uppercase">
+          {flavor.name}
+        </DialogTitle>
         <img
           src={flavor.image}
           alt={flavor.name}
           className="aspect-square w-full rounded-2xl object-cover"
           onError={handleFlavorImageError}
         />
-        <DialogTitle>{flavor.name}</DialogTitle>
         <DialogDescription>
           {/* Statut porté textuellement, jamais seulement par une couleur (UX-DR14). */}
           {isArchived ? "Cette saveur n'est plus produite" : "Active"}
         </DialogDescription>
-        <Button
-          type="button"
-          aria-pressed={isTasted}
-          onClick={() => onToggle(flavor.id)}
-          className="w-fit"
+        <Toggle
+          pressed={isTasted}
+          onPressedChange={() => onToggle(flavor.id)}
+          className={`w-fit ${PILL_BUTTON_CLASSNAME}`}
         >
           {isTasted ? "Marquer comme pas goûtée" : "Marquer comme goûtée"}
-        </Button>
+        </Toggle>
+        {/* Story 2.1 : contrôle "5 étoiles" sous le bouton toggle existant.
+            N'apparaît que dans la Dialog (pas de contrôle direct sur la
+            tuile, cf. décision produit — seul un badge d'affichage y est
+            rendu). */}
+        <StarRating value={rating} onChange={(value) => onRatingChange(flavor.id, value)} />
       </DialogContent>
     </Dialog>
   );

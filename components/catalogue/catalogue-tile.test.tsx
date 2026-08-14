@@ -39,6 +39,7 @@ describe("CatalogueTile", () => {
       <CatalogueTile
         flavor={activeFlavor}
         isTasted={false}
+        rating={undefined}
         onToggle={vi.fn()}
         onOpenDetail={vi.fn()}
       />,
@@ -56,6 +57,7 @@ describe("CatalogueTile", () => {
       <CatalogueTile
         flavor={activeFlavor}
         isTasted={false}
+        rating={undefined}
         onToggle={vi.fn()}
         onOpenDetail={vi.fn()}
       />,
@@ -69,6 +71,7 @@ describe("CatalogueTile", () => {
       <CatalogueTile
         flavor={archivedFlavor}
         isTasted={false}
+        rating={undefined}
         onToggle={vi.fn()}
         onOpenDetail={vi.fn()}
       />,
@@ -83,6 +86,7 @@ describe("CatalogueTile", () => {
       <CatalogueTile
         flavor={activeFlavor}
         isTasted={false}
+        rating={undefined}
         onToggle={vi.fn()}
         onOpenDetail={vi.fn()}
       />,
@@ -96,6 +100,7 @@ describe("CatalogueTile", () => {
       <CatalogueTile
         flavor={activeFlavor}
         isTasted={true}
+        rating={undefined}
         onToggle={vi.fn()}
         onOpenDetail={vi.fn()}
       />,
@@ -106,7 +111,8 @@ describe("CatalogueTile", () => {
 
   it("exposes a single toggle control reflecting isTasted via aria-pressed", () => {
     render(
-      <CatalogueTile flavor={activeFlavor} isTasted={true} onToggle={vi.fn()} onOpenDetail={vi.fn()} />,
+      <CatalogueTile flavor={activeFlavor} isTasted={true}
+        rating={undefined} onToggle={vi.fn()} onOpenDetail={vi.fn()} />,
     );
 
     expect(getToggleButton(/curry doux/i)).toHaveAttribute("aria-pressed", "true");
@@ -118,6 +124,7 @@ describe("CatalogueTile", () => {
       <CatalogueTile
         flavor={activeFlavor}
         isTasted={false}
+        rating={undefined}
         onToggle={onToggle}
         onOpenDetail={vi.fn()}
       />,
@@ -134,6 +141,7 @@ describe("CatalogueTile", () => {
       <CatalogueTile
         flavor={activeFlavor}
         isTasted={false}
+        rating={undefined}
         onToggle={onToggle}
         onOpenDetail={vi.fn()}
       />,
@@ -152,6 +160,7 @@ describe("CatalogueTile", () => {
       <CatalogueTile
         flavor={activeFlavor}
         isTasted={false}
+        rating={undefined}
         onToggle={onToggle}
         onOpenDetail={vi.fn()}
       />,
@@ -170,7 +179,8 @@ describe("CatalogueTile", () => {
 
   it("keeps the info button natively focusable and keyboard-activatable, mirroring the toggle button", () => {
     render(
-      <CatalogueTile flavor={activeFlavor} isTasted={false} onToggle={vi.fn()} onOpenDetail={vi.fn()} />,
+      <CatalogueTile flavor={activeFlavor} isTasted={false}
+        rating={undefined} onToggle={vi.fn()} onOpenDetail={vi.fn()} />,
     );
 
     const infoButton = screen.getByRole("button", { name: /détail|info/i }) as HTMLButtonElement;
@@ -182,7 +192,8 @@ describe("CatalogueTile", () => {
 
   it("positions the tasted badge in the tile's corner (absolute top-right), not inline with the name", () => {
     render(
-      <CatalogueTile flavor={activeFlavor} isTasted={true} onToggle={vi.fn()} onOpenDetail={vi.fn()} />,
+      <CatalogueTile flavor={activeFlavor} isTasted={true}
+        rating={undefined} onToggle={vi.fn()} onOpenDetail={vi.fn()} />,
     );
 
     expect(screen.getByText(/goûtée/i)).toHaveClass("absolute", "top-2", "right-2");
@@ -193,6 +204,7 @@ describe("CatalogueTile", () => {
       <CatalogueTile
         flavor={archivedFlavor}
         isTasted={true}
+        rating={undefined}
         onToggle={vi.fn()}
         onOpenDetail={vi.fn()}
       />,
@@ -204,7 +216,8 @@ describe("CatalogueTile", () => {
 
   it("exposes a distinct info button, sibling to the toggle button, never nested inside it", () => {
     render(
-      <CatalogueTile flavor={activeFlavor} isTasted={false} onToggle={vi.fn()} onOpenDetail={vi.fn()} />,
+      <CatalogueTile flavor={activeFlavor} isTasted={false}
+        rating={undefined} onToggle={vi.fn()} onOpenDetail={vi.fn()} />,
     );
 
     const infoButton = screen.getByRole("button", { name: /détail|info/i });
@@ -219,7 +232,8 @@ describe("CatalogueTile", () => {
   it("calls onOpenDetail with the flavor id and the info button element when the info button is activated", () => {
     const onOpenDetail = vi.fn();
     render(
-      <CatalogueTile flavor={activeFlavor} isTasted={false} onToggle={vi.fn()} onOpenDetail={onOpenDetail} />,
+      <CatalogueTile flavor={activeFlavor} isTasted={false}
+        rating={undefined} onToggle={vi.fn()} onOpenDetail={onOpenDetail} />,
     );
 
     const infoButton = screen.getByRole("button", { name: /détail|info/i });
@@ -234,6 +248,7 @@ describe("CatalogueTile", () => {
       <CatalogueTile
         flavor={activeFlavor}
         isTasted={false}
+        rating={undefined}
         onToggle={onToggle}
         onOpenDetail={vi.fn()}
       />,
@@ -250,6 +265,7 @@ describe("CatalogueTile", () => {
       <CatalogueTile
         flavor={activeFlavor}
         isTasted={false}
+        rating={undefined}
         onToggle={vi.fn()}
         onOpenDetail={onOpenDetail}
       />,
@@ -262,7 +278,8 @@ describe("CatalogueTile", () => {
 
   it("positions the info button in a corner that does not conflict with the tasted badge (top-left vs top-right)", () => {
     render(
-      <CatalogueTile flavor={activeFlavor} isTasted={true} onToggle={vi.fn()} onOpenDetail={vi.fn()} />,
+      <CatalogueTile flavor={activeFlavor} isTasted={true}
+        rating={undefined} onToggle={vi.fn()} onOpenDetail={vi.fn()} />,
     );
 
     const infoButton = screen.getByRole("button", { name: /détail|info/i });
@@ -273,11 +290,57 @@ describe("CatalogueTile", () => {
 
   it("gives each flavor's info button a distinct accessible name (screen-reader navigation by buttons list)", () => {
     render(
-      <CatalogueTile flavor={activeFlavor} isTasted={false} onToggle={vi.fn()} onOpenDetail={vi.fn()} />,
+      <CatalogueTile flavor={activeFlavor} isTasted={false}
+        rating={undefined} onToggle={vi.fn()} onOpenDetail={vi.fn()} />,
     );
 
     expect(
       screen.getByRole("button", { name: "Voir le détail de Curry Doux" }),
     ).toBeInTheDocument();
+  });
+
+  it("does not show a rating badge when rating is undefined", () => {
+    render(
+      <CatalogueTile
+        flavor={activeFlavor}
+        isTasted={false}
+        rating={undefined}
+        onToggle={vi.fn()}
+        onOpenDetail={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText(/★/)).not.toBeInTheDocument();
+  });
+
+  it("shows a compact star badge with the rating value in the tile's bottom-right corner", () => {
+    render(
+      <CatalogueTile
+        flavor={activeFlavor}
+        isTasted={false}
+        rating={4}
+        onToggle={vi.fn()}
+        onOpenDetail={vi.fn()}
+      />,
+    );
+
+    const badge = screen.getByText("★ 4");
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveClass("absolute", "bottom-2", "right-2");
+  });
+
+  it("shows both the tasted badge (top-right) and the rating badge (bottom-right) without conflict", () => {
+    render(
+      <CatalogueTile
+        flavor={activeFlavor}
+        isTasted={true}
+        rating={5}
+        onToggle={vi.fn()}
+        onOpenDetail={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(/goûtée/i)).toHaveClass("top-2", "right-2");
+    expect(screen.getByText("★ 5")).toHaveClass("bottom-2", "right-2");
   });
 });

@@ -18,15 +18,22 @@ import { handleFlavorImageError } from "./flavor-image-fallback";
 type CatalogueTileProps = {
   flavor: Flavor;
   isTasted: boolean;
+  rating: number | undefined;
   onToggle: (id: Flavor["id"]) => void;
   onOpenDetail: (id: Flavor["id"], triggerElement: HTMLButtonElement) => void;
 };
 
-export function CatalogueTile({ flavor, isTasted, onToggle, onOpenDetail }: CatalogueTileProps) {
+export function CatalogueTile({
+  flavor,
+  isTasted,
+  rating,
+  onToggle,
+  onOpenDetail,
+}: CatalogueTileProps) {
   const isArchived = flavor.status === "archived";
   return (
     <li
-      className={`${isArchived ? "bg-archived" : "bg-background"} relative aspect-square rounded-2xl border-none`}
+      className={`${isArchived ? "bg-archived" : "bg-background"} relative aspect-square rounded-2xl border-none transition-all hover:-translate-y-1 hover:shadow-[0_0_16px_rgba(0,0,0,0.18)]`}
     >
       <button
         type="button"
@@ -55,7 +62,7 @@ export function CatalogueTile({ flavor, isTasted, onToggle, onOpenDetail }: Cata
           loading="lazy"
           onError={handleFlavorImageError}
         />
-        <span className="text-foreground line-clamp-2 shrink-0 text-sm font-medium">
+        <span className="text-foreground font-recoleta line-clamp-2 shrink-0 text-[20px] leading-tight font-semibold">
           {flavor.name}
         </span>
         {isArchived ? (
@@ -74,7 +81,7 @@ export function CatalogueTile({ flavor, isTasted, onToggle, onOpenDetail }: Cata
         size="icon"
         aria-label={`Voir le détail de ${flavor.name}`}
         onClick={(event) => onOpenDetail(flavor.id, event.currentTarget)}
-        className="bg-background/90 text-foreground/80 hover:text-foreground hover:bg-background/90 absolute top-2 left-2 size-11 rounded-full"
+        className="border-foreground text-foreground absolute top-2 left-2 size-9 rounded-full border-2 bg-background shadow-[2px_2px_0px_var(--foreground)] transition-transform hover:-translate-y-0.5 hover:bg-background active:translate-y-0.5 active:shadow-[1px_1px_0px_var(--foreground)]"
       >
         <InfoIcon aria-hidden="true" className="size-4" />
       </Button>
@@ -89,9 +96,23 @@ export function CatalogueTile({ flavor, isTasted, onToggle, onOpenDetail }: Cata
         // tricolore" explicitement rejeté par DESIGN.md).
         <span
           aria-hidden="true"
-          className="bg-success text-success-foreground pointer-events-none absolute top-2 right-2 rounded-full px-2 py-0.5 text-xs"
+          className="border-foreground text-foreground pointer-events-none absolute top-2 right-2 rounded-full border-2 bg-[#8fbf98] px-2 py-0.5 font-tanker text-xs tracking-wide uppercase shadow-[2px_2px_0px_var(--foreground)]"
         >
           Goûtée
+        </span>
+      ) : null}
+      {rating !== undefined ? (
+        // Badge notation (`badge-rating`, DESIGN.md) — coin bas-droit,
+        // seul coin encore libre : info en haut-gauche, badge "Goûtée" en
+        // haut-droit (Story 2.1, AC #3). N'apparaît jamais à "0" ou vide
+        // (AC #4) — rendu conditionné à `rating !== undefined`.
+        // `pointer-events-none`, décoratif, porté par du texte (a11y),
+        // même traitement que le badge "Goûtée".
+        <span
+          aria-hidden="true"
+          className="bg-primary text-primary-foreground pointer-events-none absolute right-2 bottom-2 rounded-full px-2 py-0.5 text-xs"
+        >
+          ★ {rating}
         </span>
       ) : null}
     </li>

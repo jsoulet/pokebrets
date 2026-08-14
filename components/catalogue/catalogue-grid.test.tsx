@@ -27,6 +27,7 @@ describe("CatalogueGrid", () => {
       <CatalogueGrid
         flavors={flavors}
         tastedIds={new Set()}
+        getRating={() => undefined}
         onToggleFlavor={vi.fn()}
         onOpenFlavorDetail={vi.fn()}
       />,
@@ -41,6 +42,7 @@ describe("CatalogueGrid", () => {
       <CatalogueGrid
         flavors={flavors}
         tastedIds={new Set()}
+        getRating={() => undefined}
         onToggleFlavor={vi.fn()}
         onOpenFlavorDetail={vi.fn()}
       />,
@@ -54,6 +56,7 @@ describe("CatalogueGrid", () => {
       <CatalogueGrid
         flavors={flavors}
         tastedIds={new Set(["curry-doux"])}
+        getRating={() => undefined}
         onToggleFlavor={vi.fn()}
         onOpenFlavorDetail={vi.fn()}
       />,
@@ -72,6 +75,7 @@ describe("CatalogueGrid", () => {
       <CatalogueGrid
         flavors={flavors}
         tastedIds={new Set()}
+        getRating={() => undefined}
         onToggleFlavor={onToggleFlavor}
         onOpenFlavorDetail={vi.fn()}
       />,
@@ -88,6 +92,7 @@ describe("CatalogueGrid", () => {
       <CatalogueGrid
         flavors={flavors}
         tastedIds={new Set()}
+        getRating={() => undefined}
         onToggleFlavor={vi.fn()}
         onOpenFlavorDetail={onOpenFlavorDetail}
       />,
@@ -97,5 +102,19 @@ describe("CatalogueGrid", () => {
     infoButton.click();
 
     expect(onOpenFlavorDetail).toHaveBeenCalledWith("curry-doux", infoButton);
+  });
+
+  it("relays each flavor's rating (via getRating, joined by id) to its tile as a star badge", () => {
+    render(
+      <CatalogueGrid
+        flavors={flavors}
+        tastedIds={new Set()}
+        getRating={(id) => (id === "curry-doux" ? 4 : undefined)}
+        onToggleFlavor={vi.fn()}
+        onOpenFlavorDetail={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("★ 4")).toBeInTheDocument();
   });
 });

@@ -2,10 +2,16 @@ import type { z } from "zod";
 import { catalogueSchema } from "./catalogue";
 import { flavorSchema } from "./flavor";
 import { tastedStateSchema } from "./tasted";
+import { ratingStateSchema } from "./rating";
+import { sortModeSchema } from "./sort-preference";
+import { untastedFilterPreferenceSchema } from "./untasted-filter";
 
 export * from "./catalogue";
 export * from "./flavor";
 export * from "./tasted";
+export * from "./rating";
+export * from "./sort-preference";
+export * from "./untasted-filter";
 
 // Résultat exploitable par l'appelant — jamais une exception non gérée.
 // AD-3 traite un JSON hors schéma comme un échec de fetch (au même titre
@@ -41,4 +47,18 @@ export function parseCatalogue(input: unknown): ParseResult<z.infer<typeof catal
 
 export function parseTastedState(input: unknown): ParseResult<z.infer<typeof tastedStateSchema>> {
   return toParseResult(tastedStateSchema, input);
+}
+
+export function parseRatingState(input: unknown): ParseResult<z.infer<typeof ratingStateSchema>> {
+  return toParseResult(ratingStateSchema, input);
+}
+
+export function parseSortMode(input: unknown): ParseResult<z.infer<typeof sortModeSchema>> {
+  return toParseResult(sortModeSchema, input);
+}
+
+export function parseUntastedFilterPreference(
+  input: unknown,
+): ParseResult<z.infer<typeof untastedFilterPreferenceSchema>> {
+  return toParseResult(untastedFilterPreferenceSchema, input);
 }

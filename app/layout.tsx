@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { SerwistProvider } from "@serwist/next/react";
+import { SiteFooter } from "@/components/site-footer";
 import "./globals.css";
 
 // Inter remplace Geist Sans pour le corps de texte — police système
@@ -14,6 +16,22 @@ const inter = Inter({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+// Police display du titre "CROUNCH" — auto-hébergée (fichier .otf fourni),
+// jamais chargée depuis un CDN tiers.
+const tanker = localFont({
+  src: "./fonts/tanker-regular.otf",
+  variable: "--font-tanker",
+  display: "swap",
+});
+
+// Police du nom des saveurs (tuiles + popin détail) — DESIGN.md > Typography
+// > `tagline` (Recoleta), auto-hébergée en semi-bold (fichier .otf fourni).
+const recoleta = localFont({
+  src: "./fonts/recoleta-semibold.otf",
+  variable: "--font-recoleta",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -41,10 +59,11 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${geistMono.variable} ${tanker.variable} ${recoleta.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <SerwistProvider swUrl="/sw.js">{children}</SerwistProvider>
+        <SiteFooter />
       </body>
     </html>
   );

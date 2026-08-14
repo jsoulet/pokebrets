@@ -27,6 +27,8 @@ describe("FlavorDetailDialog", () => {
         onOpenChange={vi.fn()}
         isTasted={false}
         onToggle={vi.fn()}
+        rating={undefined}
+        onRatingChange={vi.fn()}
       />,
     );
 
@@ -41,6 +43,8 @@ describe("FlavorDetailDialog", () => {
         onOpenChange={vi.fn()}
         isTasted={false}
         onToggle={vi.fn()}
+        rating={undefined}
+        onRatingChange={vi.fn()}
       />,
     );
 
@@ -59,6 +63,8 @@ describe("FlavorDetailDialog", () => {
         onOpenChange={vi.fn()}
         isTasted={false}
         onToggle={vi.fn()}
+        rating={undefined}
+        onRatingChange={vi.fn()}
       />,
     );
 
@@ -73,6 +79,8 @@ describe("FlavorDetailDialog", () => {
         onOpenChange={vi.fn()}
         isTasted={true}
         onToggle={vi.fn()}
+        rating={undefined}
+        onRatingChange={vi.fn()}
       />,
     );
 
@@ -87,6 +95,8 @@ describe("FlavorDetailDialog", () => {
         onOpenChange={vi.fn()}
         isTasted={false}
         onToggle={vi.fn()}
+        rating={undefined}
+        onRatingChange={vi.fn()}
       />,
     );
 
@@ -103,6 +113,8 @@ describe("FlavorDetailDialog", () => {
         onOpenChange={onOpenChange}
         isTasted={false}
         onToggle={onToggle}
+        rating={undefined}
+        onRatingChange={vi.fn()}
       />,
     );
 
@@ -122,6 +134,8 @@ describe("FlavorDetailDialog", () => {
         onOpenChange={onOpenChange}
         isTasted={false}
         onToggle={onToggle}
+        rating={undefined}
+        onRatingChange={vi.fn()}
       />,
     );
 
@@ -141,6 +155,8 @@ describe("FlavorDetailDialog", () => {
         onOpenChange={onOpenChange}
         isTasted={false}
         onToggle={onToggle}
+        rating={undefined}
+        onRatingChange={vi.fn()}
       />,
     );
 
@@ -161,6 +177,8 @@ describe("FlavorDetailDialog", () => {
         onOpenChange={onOpenChange}
         isTasted={false}
         onToggle={vi.fn()}
+        rating={undefined}
+        onRatingChange={vi.fn()}
       />,
     );
 
@@ -184,6 +202,8 @@ describe("FlavorDetailDialog", () => {
             onOpenChange={setOpen}
             isTasted={false}
             onToggle={vi.fn()}
+            rating={undefined}
+            onRatingChange={vi.fn()}
             finalFocusRef={triggerRef}
           />
         </>
@@ -219,6 +239,8 @@ describe("FlavorDetailDialog", () => {
             onOpenChange={setOpen}
             isTasted={false}
             onToggle={vi.fn()}
+            rating={undefined}
+            onRatingChange={vi.fn()}
             finalFocusRef={triggerRef}
           />
         </>
