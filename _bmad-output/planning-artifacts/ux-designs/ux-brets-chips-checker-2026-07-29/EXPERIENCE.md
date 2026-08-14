@@ -1,9 +1,12 @@
 ---
 title: Crounch — Experience
-status: draft
+status: final
 sources:
   - ../../prds/prd-brets-chips-checker-2026-07-29/prd.md
-updated: 2026-07-30
+  - ../../../implementation-artifacts/2-1-notation-des-saveurs-en-etoiles.md
+  - ../../../implementation-artifacts/2-2-tri-du-catalogue-alphabetique-ou-par-note.md
+  - ../../../implementation-artifacts/2-3-filtre-afficher-uniquement-les-saveurs-non-goutees.md
+updated: 2026-08-14
 ---
 
 # Crounch — Experience Spine
@@ -21,7 +24,7 @@ Surface unique responsive (mobile-first, adapté desktop). shadcn/ui sur Next.js
 
 Pas de navigation secondaire, pas de menu, pas de tabs — l'app tient sur un seul écran principal. Le Détail est une `Dialog` superposée au Catalogue, jamais une page séparée.
 
-→ Référence de composition : `mockups/catalogue.html`. La spine gagne en cas de conflit.
+→ Référence de composition : `mockups/key-catalogue.html` (grille Catalogue, Epic 1), `mockups/key-detail-dialog.html` (Dialog de détail, Epic 1), `mockups/key-catalogue-epic2.html` (barre d'outils tri/filtre + badges notation + contrôle étoiles, Epic 2). La spine gagne en cas de conflit avec ces mocks.
 
 ## Voice and Tone
 
@@ -46,6 +49,14 @@ Comportemental. Les specs visuelles vivent dans `DESIGN.md.Components`.
 | Barre de progression / compteur | Header du Catalogue | Affiche "X/N saveurs goûtées" en continu, mis à jour immédiatement à chaque toggle. |
 | Dialog détail | Ouverte depuis l'icône info | Visuel agrandi de la saveur, nom, statut (active/archivée), et un bouton pour basculer l'état goûté/pas goûté (redondant avec le tap sur la tuile, pour les cas où l'utilisateur veut confirmer visuellement avant de cocher). |
 | Skeleton | Chargement initial du Catalogue | Grille de tuiles grises animées le temps du fetch JSON, résout dès réception des données. |
+| Contrôle étoiles (5 étoiles) *(Epic 2)* | Dialog détail | Un tap sur une étoile attribue la note correspondante (1-5), optimistic update immédiat en local storage, indépendant du toggle goûté/pas goûté. Un tap sur l'étoile de la note déjà active retire la note. Jamais couplé au statut "goûté" (deux états indépendants). |
+| Badge notation *(Epic 2)* | Chip-tile | Petit badge "★ N" en coin bas-droit de la tuile, visible uniquement si la saveur est notée. N'intercepte jamais le tap principal (bascule goûté/pas goûté) ni le tap sur l'icône info. |
+| Toolbar sort control *(Epic 2 — Story 2.2)* | Au-dessus de la grille, sous le zigzag | Segmented control "Alphabétique" / "Par note" ; changer de mode réordonne la grille immédiatement sans rechargement. Défaut : Alphabétique. Saveurs non notées toujours en fin de classement en mode "Par note". Préférence mémorisée entre les sessions. |
+| Toolbar filter toggle *(Epic 2 — Story 2.3)* | Au-dessus de la grille, sous le zigzag, à droite du toolbar sort control | Interrupteur "Non goûtées uniquement" ; activé, ne masque de la grille que les saveurs déjà goûtées — le compteur de progression du header continue de compter sur l'ensemble du Catalogue, jamais sur le sous-ensemble filtré. Désactivé par défaut. Préférence mémorisée entre les sessions. |
+| Badge goûtée | Chip-tile | Purement informatif, ne réagit à aucune interaction propre ; apparaît/disparaît avec le toggle de la tuile (cf. état "Toggle réussi" ci-dessous). |
+| Badge archivée | Chip-tile | Purement informatif, permanent tant que la saveur est archivée ; n'intercepte aucun tap, la tuile reste cochable en-dessous. |
+| Button primary | Dialog détail | Bouton de bascule goûté/pas goûté dans la Dialog ; comportement redondant avec le tap sur la tuile (cf. ligne `Dialog détail`). |
+| Section divider | Entre le header et le corps de page | Purement décoratif, aucune interaction ; ne doit jamais chevaucher ou masquer un élément tapable. |
 
 ## State Patterns
 
@@ -56,6 +67,12 @@ Comportemental. Les specs visuelles vivent dans `DESIGN.md.Components`.
 | Hors ligne sans cache (tout premier lancement) | Catalogue | État vide explicite : "Impossible de charger le catalogue pour l'instant. Réessaie avec une connexion." + bouton "Réessayer." |
 | Saveur archivée | Chip-tile | Badge pilule "archivée" visible en permanence sur la tuile, reste cochable. |
 | Toggle réussi | Chip-tile | Le badge coche "goûtée" apparaît/disparaît instantanément en coin de la tuile (`{colors.success}`), le fond de la tuile ne change pas — pas de confirmation modale. |
+| Note attribuée/retirée *(Epic 2)* | Chip-tile + Dialog | Le badge "★ N" apparaît/disparaît instantanément en coin bas-droit de la tuile, sans confirmation modale — même philosophie optimistic update que le toggle goûté/pas goûté. |
+| Filtre actif sans résultat *(Epic 2 — Story 2.3)* | Catalogue | Si toutes les saveurs sont déjà goûtées et le filtre "non goûtées" actif, message dédié positif à la place de la grille vide (ex. "Bravo, tu as tout goûté ! 🎉") — jamais un espace blanc silencieux. |
+| Ouverture sans note | Dialog détail | Contrôle étoiles affiché à 0 étoile pleine (aucune sélection) ; aucun badge notation associé tant qu'aucune étoile n'est tapée. |
+| Ouverture avec note existante | Dialog détail | Contrôle étoiles pré-rempli jusqu'à la note enregistrée ; cohérent avec le badge "★ N" déjà visible sur la tuile avant ouverture. |
+| Saveur archivée (détail) | Dialog détail | Le bouton de bascule goûté/pas goûté reste actif (comportement identique au chip-tile archivé) ; le badge "archivée" est répété dans la Dialog pour rester visible sans avoir à la fermer. |
+| Échec d'écriture locale (quota/stockage plein) | Chip-tile + Dialog | Le toggle/la note revient visuellement à son état précédent (rollback de l'optimistic update) et un `Toast` signale l'échec ("Impossible d'enregistrer, réessaie") — jamais un état incohérent silencieux entre la tuile et la Dialog. |
 
 ## Interaction Primitives
 
@@ -65,6 +82,9 @@ Comportemental. Les specs visuelles vivent dans `DESIGN.md.Components`.
 - **Tap sur l'icône info** — ouvre le détail visuel de la saveur, sans toggle.
 - **Tap en dehors / Échap** — ferme la Dialog de détail.
 - **Souris (desktop)** : mêmes actions au clic ; pas de raccourcis clavier dédiés — l'app est trop simple pour en justifier.
+- **Tap sur une étoile (Dialog, Epic 2)** — attribue la note correspondante ; retap sur la même étoile la retire. N'ouvre ni ne ferme jamais la Dialog, ne touche jamais le statut goûté/pas goûté.
+- **Tap sur le toolbar sort control (Epic 2)** — change immédiatement l'ordre de la grille, sans étape de confirmation.
+- **Tap sur le toolbar filter toggle (Epic 2)** — bascule instantanément la grille filtrée/complète, réactif à tout changement d'état goûté pendant qu'il reste actif.
 
 **Banni :** confirmation modale avant de cocher/décocher (ça casse la rapidité du geste), swipe-to-delete ou tout geste caché non découvrable.
 
@@ -77,6 +97,8 @@ Comportemental. Le contraste visuel vit dans `DESIGN.md`.
 - Le lecteur d'écran annonce le changement d'état au toggle : "{Nom de la saveur}, goûtée" / "{Nom de la saveur}, pas goûtée."
 - La Dialog de détail est pilotable au clavier (`Tab`, `Enter`, `Échap`) pour l'usage desktop.
 - Le badge "archivée" est annoncé par le lecteur d'écran comme information, pas seulement visuel (pas de sens porté uniquement par la couleur).
+- **Contrôle étoiles (Epic 2)** : chaque étoile est un bouton focusable individuellement avec un `aria-label` explicite ("Noter {n} étoiles sur 5") — jamais un slider ni un groupe non focusable un par un.
+- **Toolbar sort control / toolbar filter toggle (Epic 2)** : l'état actif est restitué explicitement aux technologies d'assistance (`aria-pressed`/`role="radiogroup"` pour le tri, `role="switch"` + `aria-checked` pour le filtre) — jamais une information portée uniquement par un changement de couleur.
 
 ## Responsive & Platform
 
@@ -98,6 +120,8 @@ L'app reste utilisable confortablement sur desktop (JTBD "après avoir goûté u
 
 ## Key Flows
 
+*(FR-5 du PRD — l'outil de scraping/mise à jour du catalogue — est un script/CLI sans interface graphique, hors périmètre de cette spine UX ; cf. `Inspiration & Anti-patterns > Hors périmètre UX`.)*
+
 ### Flow 1 — Vérification en rayon (Johan, devant le rayon chips)
 
 1. Johan a un paquet de chips Brets "Crème & Ciboulette" en main, hésite à l'acheter.
@@ -115,3 +139,14 @@ L'app reste utilisable confortablement sur desktop (JTBD "après avoir goûté u
 5. Résolution : il ferme l'app, sa collection est à jour pour la prochaine fois.
 
 **Cas limite :** s'il n'est pas sûr d'avoir bien identifié la bonne saveur (visuel ambigu), il tape sur l'icône info de la tuile pour ouvrir le Détail et comparer le visuel agrandi au paquet réel avant de valider le toggle.
+
+### Flow 3 — Noter, trier et retrouver ses saveurs restantes *(Epic 2, Johan quelques semaines après avoir commencé sa collection)*
+
+1. Johan a maintenant coché une trentaine de saveurs. Il vient de goûter "Barbecue Fumé" et l'a trouvé excellent.
+2. Il tape sur l'icône info de la tuile pour ouvrir le Détail, puis tape sur la 5ᵉ étoile du contrôle : la note s'enregistre instantanément, le badge "★ 5" apparaît en coin bas-droit de la tuile dès la fermeture de la Dialog.
+3. Curieux de revoir ses coups de cœur, il tape sur le toolbar sort control et passe de "Alphabétique" à "Par note" : la grille se réordonne immédiatement, ses saveurs les mieux notées remontent en tête, les non-notées finissent en fin de liste.
+4. Il repasse en rayon plus tard et active le toolbar filter toggle "Non goûtées uniquement" pour se concentrer sur ce qu'il lui reste à découvrir : la grille ne montre plus que les tuiles sans badge "goûtée", le compteur d'en-tête continue d'afficher "31/48" (le total réel, pas le sous-ensemble filtré).
+5. **Climax :** il repère une nouvelle saveur jamais goûtée grâce à cette vue épurée, la prend en rayon avec confiance.
+6. Résolution : de retour chez lui, il désactive le filtre — sa vue complète et sa préférence de tri sont restées mémorisées d'une session à l'autre, rien à reconfigurer.
+
+**Cas limite :** s'il a déjà tout goûté et que le filtre "non goûtées" reste actif, la grille vide affiche "Bravo, tu as tout goûté ! 🎉" au lieu d'un espace blanc (cf. `State Patterns > Filtre actif sans résultat`).
