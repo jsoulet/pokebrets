@@ -1,6 +1,6 @@
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { SortMode } from "@/lib/schema";
-import { PILL_BUTTON_CLASSNAME } from "./pill-button-styles";
+import { SEGMENTED_GROUP_CLASSNAME, SEGMENTED_ITEM_CLASSNAME } from "./pill-button-styles";
 
 // Composant de présentation pur (Story 2.2), même philosophie que
 // `star-rating.tsx` : ne lit/écrit jamais `localStorage`, reçoit
@@ -28,16 +28,21 @@ export function SortControl({ value, onChange }: SortControlProps) {
           }
         }}
         aria-label="Trier le catalogue"
-        className="gap-3"
+        spacing={0}
+        className={SEGMENTED_GROUP_CLASSNAME}
       >
         <ToggleGroupItem
           value="alphabetical"
           aria-label="Trier par ordre alphabétique"
-          className={PILL_BUTTON_CLASSNAME}
+          className={SEGMENTED_ITEM_CLASSNAME}
         >
           Alphabétique
         </ToggleGroupItem>
-        <ToggleGroupItem value="rating" aria-label="Trier par note" className={PILL_BUTTON_CLASSNAME}>
+        <ToggleGroupItem
+          value="rating"
+          aria-label="Trier par note"
+          className={SEGMENTED_ITEM_CLASSNAME}
+        >
           Par note
         </ToggleGroupItem>
       </ToggleGroup>

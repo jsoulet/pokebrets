@@ -5,7 +5,7 @@ import { useCatalogue } from "@/lib/catalogue";
 import { useTasted } from "@/lib/tasted";
 import { useRating } from "@/lib/rating";
 import { useSortPreference } from "@/lib/sort-preference";
-import { useUntastedFilter } from "@/lib/untasted-filter";
+import { useTastedFilter } from "@/lib/tasted-filter";
 import type { Catalogue } from "@/lib/schema";
 
 // [Review] Cf. catalogue-tile.test.tsx : le nom accessible du bouton toggle
@@ -37,7 +37,7 @@ vi.mock("@/lib/tasted", () => ({
 }));
 
 // Story 2.1/2.2/2.3: same rationale — the underlying hooks (lib/rating,
-// lib/sort-preference, lib/untasted-filter) each have their own exhaustive
+// lib/sort-preference, lib/tasted-filter) each have their own exhaustive
 // unit test suite. Mocking here keeps this suite deterministic (no shared
 // localStorage state leaking across tests) and focused purely on how the
 // page composes/projects their public contracts.
@@ -49,15 +49,15 @@ vi.mock("@/lib/sort-preference", () => ({
   useSortPreference: vi.fn(),
 }));
 
-vi.mock("@/lib/untasted-filter", () => ({
-  useUntastedFilter: vi.fn(),
+vi.mock("@/lib/tasted-filter", () => ({
+  useTastedFilter: vi.fn(),
 }));
 
 const mockedUseCatalogue = vi.mocked(useCatalogue);
 const mockedUseTasted = vi.mocked(useTasted);
 const mockedUseRating = vi.mocked(useRating);
 const mockedUseSortPreference = vi.mocked(useSortPreference);
-const mockedUseUntastedFilter = vi.mocked(useUntastedFilter);
+const mockedUseTastedFilter = vi.mocked(useTastedFilter);
 
 const catalogue: Catalogue = {
   generatedAt: "2026-07-31T00:00:00.000Z",
@@ -99,10 +99,10 @@ function mockUseSortPreference(overrides: Partial<ReturnType<typeof useSortPrefe
   });
 }
 
-function mockUseUntastedFilter(overrides: Partial<ReturnType<typeof useUntastedFilter>> = {}) {
-  mockedUseUntastedFilter.mockReturnValue({
-    showOnlyUntasted: false,
-    setShowOnlyUntasted: vi.fn(),
+function mockUseTastedFilter(overrides: Partial<ReturnType<typeof useTastedFilter>> = {}) {
+  mockedUseTastedFilter.mockReturnValue({
+    filterMode: "all",
+    setFilterMode: vi.fn(),
     ...overrides,
   });
 }
@@ -114,7 +114,7 @@ describe("CataloguePageClient", () => {
     mockUseTasted();
     mockUseRating();
     mockUseSortPreference();
-    mockUseUntastedFilter();
+    mockUseTastedFilter();
   });
 
   it('shows the grid skeleton while status is "loading"', () => {

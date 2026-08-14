@@ -5,14 +5,14 @@ import { useCatalogue } from "@/lib/catalogue";
 import { useTasted } from "@/lib/tasted";
 import { useRating } from "@/lib/rating";
 import { useSortPreference } from "@/lib/sort-preference";
-import { useUntastedFilter } from "@/lib/untasted-filter";
+import { useTastedFilter } from "@/lib/tasted-filter";
 import { sortFlavors } from "@/lib/catalogue/sort";
 import { Button } from "@/components/ui/button";
 import { CatalogueGrid } from "./catalogue-grid";
 import { CatalogueGridSkeleton } from "./catalogue-grid-skeleton";
 import { FlavorDetailDialog } from "./flavor-detail-dialog";
 import { SortControl } from "./sort-control";
-import { UntastedFilterToggle } from "./untasted-filter-toggle";
+import { TastedFilterControl } from "./tasted-filter-control";
 
 // [Review] Filet zigzag façon bord de sachet ouvert (DESIGN.md >
 // components.section-divider). Reproduit via un masque SVG (`mask-image`)
@@ -63,7 +63,7 @@ export function CataloguePageClient() {
   const { tastedIds, toggleTasted } = useTasted();
   const { getRating, setRating } = useRating();
   const { sortMode, setSortMode } = useSortPreference();
-  const { showOnlyUntasted, setShowOnlyUntasted } = useUntastedFilter();
+  const { filterMode, setFilterMode } = useTastedFilter();
 
   // Annonce lecteur d'écran du changement d'état (AC #5, UX-DR14) : une
   // région `aria-live="polite"` distincte plutôt que de faire reposer toute
@@ -99,13 +99,17 @@ export function CataloguePageClient() {
   const flavors = status === "ready" ? (data?.flavors ?? []) : [];
 
   // Ordre des transformations (Story 2.2/2.3) : Catalogue brut → tri →
-  // filtre goûté/non-goûté → grille. Le compteur de progression ci-dessous
-  // continue d'utiliser `flavors` (l'ensemble complet), jamais `sortedFlavors`
-  // ni `visibleFlavors` (AC #8 Story 2.3 — piège principal identifié).
+  // filtre goûté/non-goûté/toutes → grille. Le compteur de progression
+  // ci-dessous continue d'utiliser `flavors` (l'ensemble complet), jamais
+  // `sortedFlavors` ni `visibleFlavors` (AC #8 Story 2.3 — piège principal
+  // identifié).
   const sortedFlavors = sortFlavors(flavors, sortMode, getRating);
-  const visibleFlavors = showOnlyUntasted
-    ? sortedFlavors.filter((flavor) => !tastedIds.has(flavor.id))
-    : sortedFlavors;
+  const visibleFlavors =
+    filterMode === "all"
+      ? sortedFlavors
+      : sortedFlavors.filter((flavor) =>
+          filterMode === "tasted" ? tastedIds.has(flavor.id) : !tastedIds.has(flavor.id),
+        );
 
   // Compteur de progression (AC #4, UX-DR10) : `X` dérivé par jointure sur les
   // `flavor.id` du Catalogue courant, jamais par un compte déconnecté du
@@ -117,7 +121,7 @@ export function CataloguePageClient() {
   // résultat, cf. deferred-work.md) — ici le Catalogue a des saveurs, mais
   // le filtre actif n'en laisse aucune visible.
   const showEmptyFilterState =
-    status === "ready" && showOnlyUntasted && visibleFlavors.length === 0 && flavors.length > 0;
+    status === "ready" && filterMode !== "all" && visibleFlavors.length === 0 && flavors.length > 0;
 
   function handleToggleFlavor(id: string) {
     const flavor = flavors.find((candidate) => candidate.id === id);
@@ -225,7 +229,7 @@ export function CataloguePageClient() {
               combinable avec n'importe quel tri) — sans lui les deux
               pilules identiques laissaient croire à une 3e option de tri. */}
           <div aria-hidden="true" className="bg-foreground/20 h-8 w-px" />
-          <UntastedFilterToggle checked={showOnlyUntasted} onCheckedChange={setShowOnlyUntasted} />
+          <TastedFilterControl value={filterMode} onChange={setFilterMode} />
         </div>
       ) : null}
       {isOffline ? (
@@ -256,9 +260,14 @@ export function CataloguePageClient() {
           {showEmptyFilterState ? (
             // Story 2.3, AC #4 : message dédié positif plutôt qu'un espace
             // vide silencieux — ton léger (UX-DR15), `role="status"` (pas
-            // une erreur, cf. bannière hors-ligne ci-dessus).
+            // une erreur, cf. bannière hors-ligne ci-dessus). Message
+            // distinct selon le filtre actif : "tout goûté" reste
+            // valorisant pour le filtre "non goûtées", mais n'aurait aucun
+            // sens pour le filtre "goûtées" (rien encore goûté).
             <p role="status" className="text-foreground p-8 text-center">
-              Bravo, tu as tout goûté ! 🎉
+              {filterMode === "untasted"
+                ? "Bravo, tu as tout goûté ! 🎉"
+                : "Tu n'as encore rien goûté."}
             </p>
           ) : (
             <CatalogueGrid
