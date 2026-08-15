@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>UX Design Validation: crounch</title>
+<style>
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --border: #e7e5e4;
+    --text: #1c1917;
+    --muted: #78716c;
+
+    --verdict-strong: #16a34a;
+    --verdict-adequate: #65a30d;
+    --verdict-thin: #d97706;
+    --verdict-broken: #dc2626;
+
+    --sev-low: #64748b;
+    --sev-medium: #ca8a04;
+    --sev-high: #ea580c;
+    --sev-critical: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 24px 64px; }
+
+  header.report-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .title h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+  .title .subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+  .synthesis {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--muted);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 24px;
+    font-size: 15.5px;
+  }
+  .synthesis p { margin: 0 0 10px; }
+  .synthesis p:last-child { margin-bottom: 0; }
+
+  .dimension-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .dim-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .dim-card .dim-name { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .dim-card .dim-verdict { font-size: 14px; font-weight: 600; }
+
+  section.dimension, section.reviewer-section { margin-bottom: 14px; }
+  section.dimension details, section.reviewer-section details {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  section summary {
+    padding: 14px 20px;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  section summary::-webkit-details-marker { display: none; }
+  section summary::before {
+    content: "▸";
+    display: inline-block;
+    color: var(--muted);
+    transition: transform 0.15s ease;
+  }
+  section details[open] summary::before { transform: rotate(90deg); }
+  section summary h2 {
+    display: inline;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    flex: 1;
+  }
+  .verdict-pill {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: white;
+  }
+  .verdict-strong { background: var(--verdict-strong); }
+  .verdict-adequate { background: var(--verdict-adequate); }
+  .verdict-thin { background: var(--verdict-thin); }
+  .verdict-broken { background: var(--verdict-broken); }
+
+  .dim-body { padding: 4px 20px 18px; }
+  .dim-judgment { color: var(--text); font-size: 14.5px; }
+  .dim-judgment p { margin: 0 0 10px; }
+
+  .findings-list { padding: 0 20px 4px; }
+  article.finding {
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+  }
+  article.finding:first-child { border-top: none; }
+  article.finding header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .badge {
+    font-size: 10.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+  }
+  .badge-sev-low { background: rgba(100, 116, 139, 0.12); color: var(--sev-low); }
+  .badge-sev-medium { background: rgba(202, 138, 4, 0.14); color: var(--sev-medium); }
+  .badge-sev-high { background: rgba(234, 88, 12, 0.14); color: var(--sev-high); }
+  .badge-sev-critical { background: rgba(220, 38, 38, 0.14); color: var(--sev-critical); }
+  .finding-title { margin: 0; font-size: 15px; font-weight: 500; flex: 1; min-width: 200px; }
+  .finding-location { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; color: var(--muted); }
+  .finding-note, .finding-fix { margin-top: 6px; font-size: 14px; }
+  .finding-fix strong { color: var(--muted); font-weight: 500; }
+
+  .reviewer-source {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  .mechanical {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-top: 24px;
+    font-size: 14px;
+  }
+  .mechanical h3 { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .mechanical ul { margin: 0; padding-left: 20px; }
+  .mechanical li { margin-bottom: 4px; color: var(--text); }
+
+  footer.report-footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  footer .meta { display: flex; gap: 24px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+  <div class="container">
+
+    <header class="report-header">
+      <div class="title">
+        <h1>crounch — UX Design Validation Report</h1>
+        <div class="subtitle">_bmad-output/planning-artifacts/ux-designs/ux-brets-chips-checker-2026-07-29/</div>
+      </div>
+    </header>
+
+    <div class="synthesis">
+      <p>Le pair DESIGN.md/EXPERIENCE.md reste lisible et bien structuré, mais il n'est plus assez fiable comme contrat canonique. Les plus gros écarts portent sur la complétude des tokens, la couverture des composants réellement livrés et plusieurs comportements/états devenus faux ou obsolètes après les derniers polishs UI (segmented control 3 états, dialog restylé, badge/bouton info, zigzag, footer).</p>
+      <p>Ce drift est attendu : beaucoup de polish visuel ad-hoc a été fait sans repasser par une Update des spines. Le contenu de fond (IA, ton, flows principaux, forme des documents) reste solide — c'est la synchronisation avec le code qui a besoin d'un rattrapage, pas une refonte.</p>
+    </div>
+
+    <div class="dimension-summary">
+      <div class="dim-card"><div class="dim-name">1. Flow coverage</div><div class="dim-verdict" style="color: var(--verdict-thin)">thin</div></div>
+      <div class="dim-card"><div class="dim-name">2. Token completeness</div><div class="dim-verdict" style="color: var(--verdict-broken)">broken</div></div>
+      <div class="dim-card"><div class="dim-name">3. Component coverage</div><div class="dim-verdict" style="color: var(--verdict-broken)">broken</div></div>
+      <div class="dim-card"><div class="dim-name">4. State coverage</div><div class="dim-verdict" style="color: var(--verdict-thin)">thin</div></div>
+      <div class="dim-card"><div class="dim-name">5. Visual reference coverage</div><div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div></div>
+      <div class="dim-card"><div class="dim-name">6. Bloat &amp; overspecification</div><div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div></div>
+      <div class="dim-card"><div class="dim-name">7. Inheritance discipline</div><div class="dim-verdict" style="color: var(--verdict-thin)">thin</div></div>
+      <div class="dim-card"><div class="dim-name">8. Shape fit</div><div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div></div>
+    </div>
+
+    <section class="dimension">
+      <details open>
+        <summary><h2>1. Flow coverage</h2><span class="verdict-pill verdict-thin">thin</span></summary>
+        <div class="dim-body"><div class="dim-judgment"><p>Les user-journeys/requirements extraits des <code>sources:</code> (prd.md, stories 2.1/2.2/2.3) ont été vérifiés contre les Key Flows d'EXPERIENCE.md (protagoniste nommé, étapes numérotées, climax, échec).</p></div></div>
+        <div class="findings-list">
+          <article class="finding">
+            <header><span class="badge badge-sev-high">high</span><h3 class="finding-title">UJ-3 / FR-5 sans Key Flow dédié</h3><span class="finding-location">prd.md:30,96 · EXPERIENCE.md:119,123</span></header>
+            <div class="finding-note">Ces sources restent référencées mais sont évacuées par une note "hors périmètre UX" plutôt qu'un vrai traitement de couverture.</div>
+            <div class="finding-fix"><strong>Fix:</strong> retirer cette source du pair UX, ou expliciter formellement dans le frontmatter/overview que FR-5 est importé pour contexte seulement et exclu de la validation de flows.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><h3 class="finding-title">Cas d'échec applicables non couverts par un flow</h3><span class="finding-location">EXPERIENCE.md:67,75,125-152</span></header>
+            <div class="finding-note">Le happy path principal est bien couvert, mais pas le premier lancement hors ligne ni l'échec d'écriture locale, déjà reconnus ailleurs dans la spine.</div>
+            <div class="finding-fix"><strong>Fix:</strong> ajouter au moins un flow d'échec réseau/cold start et aligner le flow d'écriture locale sur le comportement réellement implémenté.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details open>
+        <summary><h2>2. Token completeness</h2><span class="verdict-pill verdict-broken">broken</span></summary>
+        <div class="dim-body"><div class="dim-judgment"><p>Tokens YAML de DESIGN.md et références <code>{path.to.token}</code> dans les deux spines, vérifiés pour résolution et présence de valeurs exploitables pour les couleurs porteuses.</p></div></div>
+        <div class="findings-list">
+          <article class="finding">
+            <header><span class="badge badge-sev-critical">critical</span><h3 class="finding-title">Tokens consommés mais jamais déclarés</h3><span class="finding-location">DESIGN.md:8-16,85,90,112,145,151-152</span></header>
+            <div class="finding-note"><code>{colors.foreground}</code> et <code>{colors.muted}</code> sont consommés par toolbar-sort-control, toolbar-filter-toggle et l'icône info, mais <code>colors</code> ne déclare que primary/accent/success/archived/background (+ paires foreground associées).</div>
+            <div class="finding-fix"><strong>Fix:</strong> déclarer explicitement ces tokens dans DESIGN.md avec leurs valeurs réelles (ou paires light/dark) au lieu de déléguer à "l'héritage shadcn".</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-high">high</span><h3 class="finding-title">Aucune cible de contraste pour les combinaisons porteuses</h3><span class="finding-location">DESIGN.md:105-153 · EXPERIENCE.md:95</span></header>
+            <div class="finding-note">Les contrastes critiques sont exigés côté accessibilité, mais aucune cible n'est donnée pour primary/primary-foreground, success/badge goûtée, texte sur bandeau moutarde, badge archivé.</div>
+            <div class="finding-fix"><strong>Fix:</strong> documenter les couples de contraste attendus et la cible minimale (AA normal/large text) pour chaque combinaison charge-bearing.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-high">high</span><h3 class="finding-title">Valeurs visuelles non tokenisées dans le code</h3><span class="finding-location">catalogue-page-client.tsx:173,218 · catalogue-tile.tsx:99 · flavor-detail-dialog.tsx:65-68 · app/layout.tsx:20-33</span></header>
+            <div class="finding-note">Zigzag #ffc602 + trait noir, badge "Goûtée" #8fbf98, titre de dialog #b5652e, police font-tanker auto-hébergée : toutes des valeurs qui divergent du spine documenté.</div>
+            <div class="finding-fix"><strong>Fix:</strong> ramener l'implémentation sur les tokens documentés, ou promouvoir ces valeurs en tokens nommés dans DESIGN.md.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details open>
+        <summary><h2>3. Component coverage</h2><span class="verdict-pill verdict-broken">broken</span></summary>
+        <div class="dim-body"><div class="dim-judgment"><p>Noms de composants comparés entre les deux spines, leurs lignes de specs (DESIGN.md &gt; Components / EXPERIENCE.md &gt; Component Patterns) et les composants réellement présents sous components/catalogue/.</p></div></div>
+        <div class="findings-list">
+          <article class="finding">
+            <header><span class="badge badge-sev-high">high</span><h3 class="finding-title">Filtre documenté comme switch binaire, livré comme segmented control 3 états</h3><span class="finding-location">DESIGN.md:87-90,152,166 · EXPERIENCE.md:55,148 · tasted-filter-control.tsx:18-51</span></header>
+            <div class="finding-note">L'implémentation réelle est TastedFilterControl (Toutes / Goûtées / Non goûtées), pas un "Toolbar filter toggle" binaire.</div>
+            <div class="finding-fix"><strong>Fix:</strong> remplacer la spec du switch par une spec canonique de TastedFilterControl, avec ses 3 options, son nom exact et ses règles de vide associées.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-high">high</span><h3 class="finding-title">Dialog détail et Button primary désynchronisés du code</h3><span class="finding-location">DESIGN.md:147 · EXPERIENCE.md:50,58 · flavor-detail-dialog.tsx:57-92</span></header>
+            <div class="finding-note">Le code livre un dialog restylé (kicker "Saveur", grand titre Tanker, couleur dédiée) et un Toggle pilule partagé, pas un dialog shadcn "standard" avec bouton primary en pied.</div>
+            <div class="finding-fix"><strong>Fix:</strong> réécrire la spec visuelle et comportementale du détail selon le composant réellement monté.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><h3 class="finding-title">Progress bar et footer non couverts</h3><span class="finding-location">DESIGN.md:146 · catalogue-page-client.tsx:183-207 · app/layout.tsx:5,66 · site-footer.tsx:6-20</span></header>
+            <div class="finding-note">Des composants visibles en production (vraie barre de progression, footer de site global) n'ont pas de ligne de composant dans les spines.</div>
+            <div class="finding-fix"><strong>Fix:</strong> ajouter une ligne pour la progress bar/header composite et une ligne pour SiteFooter (ou documenter explicitement qu'il est hors spine si volontaire).</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><h3 class="finding-title">Toast/Checkbox inventoriés mais non implémentés</h3><span class="finding-location">DESIGN.md:137 · EXPERIENCE.md:41-59</span></header>
+            <div class="finding-note">DESIGN.md inventorie Toast et Checkbox, mais EXPERIENCE.md ne leur donne pas de pattern comportemental et le code n'implémente ni toast ni checkbox UX visibles.</div>
+            <div class="finding-fix"><strong>Fix:</strong> ajouter de vraies règles comportementales et l'implémentation correspondante, ou retirer ces composants du pair jusqu'à ce qu'ils existent.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details open>
+        <summary><h2>4. State coverage</h2><span class="verdict-pill verdict-thin">thin</span></summary>
+        <div class="dim-body"><div class="dim-judgment"><p>Chaque surface IA (Catalogue, Dialog détail) comparée aux états attendus pour ce produit puis aux états réellement codés dans catalogue-page-client.tsx et les stores locaux.</p></div></div>
+        <div class="findings-list">
+          <article class="finding">
+            <header><span class="badge badge-sev-high">high</span><h3 class="finding-title">Échec d'écriture locale : spec vs code divergent</h3><span class="finding-location">EXPERIENCE.md:75 · lib/tasted/cache.ts:67-68 · lib/rating/cache.ts:62 · lib/sort-preference/cache.ts:47-48 · lib/tasted-filter/cache.ts:72</span></header>
+            <div class="finding-note">Documenté avec rollback + Toast, mais le code réel dégrade silencieusement les écritures localStorage sans toast, et retourne quand même le snapshot optimiste.</div>
+            <div class="finding-fix"><strong>Fix:</strong> implémenter réellement rollback + toast, ou corriger la spine pour refléter la dégradation silencieuse actuelle.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><h3 class="finding-title">État vide "Goûtées" sans résultat non documenté</h3><span class="finding-location">catalogue-page-client.tsx:269-279 · EXPERIENCE.md:71</span></header>
+            <div class="finding-note">Le passage au filtre 3 états crée un état vide supplémentaire ("Goûtées" actif alors que rien n'a encore été goûté), géré en code ("Tu n'as encore rien goûté."), absent de State Patterns qui ne couvre que le cas "tout goûté" du filtre binaire historique.</div>
+            <div class="finding-fix"><strong>Fix:</strong> ajouter un état vide explicite pour filterMode = tasted sans résultat.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><h3 class="finding-title">État "catalogue vide mais fetch réussi" absent</h3><span class="finding-location">EXPERIENCE.md:65-75</span></header>
+            <div class="finding-note">Le pair distingue loading / offline with cache / offline without cache / filtered empty, mais pas "0 saveur disponible" au niveau catalogue.</div>
+            <div class="finding-fix"><strong>Fix:</strong> ajouter ou exclure explicitement cet état.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-low">low</span><h3 class="finding-title">Focus/hover des nouveaux contrôles non couverts</h3><span class="finding-location">star-rating.tsx:31-44 · pill-button-styles.ts:1-18 · catalogue-tile.tsx:78-85</span></header>
+            <div class="finding-note">Le code dépend de ces états pour le feedback (hover stars, segmented pills, bouton info en sticker), mais ils ne sont pas documentés.</div>
+            <div class="finding-fix"><strong>Fix:</strong> documenter au minimum focus-visible, pressed et hover pour les contrôles clés.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary><h2>5. Visual reference coverage</h2><span class="verdict-pill verdict-adequate">adequate</span></summary>
+        <div class="dim-body"><div class="dim-judgment"><p>Fichiers de mockups/ et imports/ listés et vérifiés pour citation, emplacement et précision de ce qu'ils illustrent.</p></div></div>
+        <div class="findings-list">
+          <article class="finding">
+            <header><span class="badge badge-sev-low">low</span><h3 class="finding-title">Références vagues aux imports brets.fr</h3><span class="finding-location">DESIGN.md:103 · EXPERIENCE.md:115</span></header>
+            <div class="finding-note">imports/brets-fr-01..06 référencé en plage plutôt qu'en fichier-par-fichier lié à la décision qu'il supporte.</div>
+            <div class="finding-fix"><strong>Fix:</strong> remplacer les plages/raccourcis par des liens fichier-par-fichier et nommer explicitement ce que chaque visuel démontre.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-low">low</span><h3 class="finding-title">Mockups cités en bloc, pas par section</h3><span class="finding-location">EXPERIENCE.md:27</span></header>
+            <div class="finding-note">Les sections qui ont le plus dérivé (dialog détaillé, toolbar tri/filtre, header/progression) ne pointent pas directement vers le mockup concerné.</div>
+            <div class="finding-fix"><strong>Fix:</strong> ajouter des renvois ciblés depuis les sections de composants et responsive pertinentes.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary><h2>6. Bloat &amp; overspecification</h2><span class="verdict-pill verdict-adequate">adequate</span></summary>
+        <div class="dim-body"><div class="dim-judgment"><p>Recherche des endroits où le pair répète la source, spécifie des détails qui devraient vivre dans les tokens, ou ajoute de la narration peu exploitable.</p></div></div>
+        <div class="findings-list">
+          <article class="finding">
+            <header><span class="badge badge-sev-low">low</span><h3 class="finding-title">Contexte produit re-raconté au lieu de référencé</h3><span class="finding-location">DESIGN.md:101-103 · EXPERIENCE.md:14-27,113-119</span></header>
+            <div class="finding-note">Plusieurs sections (Brand & Style, Foundation, Inspiration) re-racontent le contexte produit au lieu de référencer le PRD.</div>
+            <div class="finding-fix"><strong>Fix:</strong> garder la prose qui change une décision UX et convertir le reste en références courtes au PRD.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-low">low</span><h3 class="finding-title">Section Components en forme narrative plutôt que tabulaire</h3><span class="finding-location">DESIGN.md:137-152</span></header>
+            <div class="finding-note">Mélange inventaire générique shadcn, specs marque et décisions de placement détaillées ; une table normalisée serait plus exploitable et limiterait les dérives.</div>
+            <div class="finding-fix"><strong>Fix:</strong> passer à une structure tabulaire systématique : nom canonique, rôle, tokens, variantes, références visuelles, notes d'accessibilité.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details open>
+        <summary><h2>7. Inheritance discipline</h2><span class="verdict-pill verdict-thin">thin</span></summary>
+        <div class="dim-body"><div class="dim-judgment"><p>Résolution des sources:, identité des termes entre sources/spines, cohérence des noms de composants et validité des références croisées EXPERIENCE.md → DESIGN.md.</p></div></div>
+        <div class="findings-list">
+          <article class="finding">
+            <header><span class="badge badge-sev-high">high</span><h3 class="finding-title">Nommage divergent entre spine et code</h3><span class="finding-location">DESIGN.md:147,151-152 · EXPERIENCE.md:54-58 · sort-control.tsx:15 · tasted-filter-control.tsx:18 · flavor-detail-dialog.tsx:82 · app/layout.tsx:20-33</span></header>
+            <div class="finding-note">"Toolbar filter toggle" ≠ TastedFilterControl, "Toolbar sort control" ≠ SortControl, "Button primary" ≠ Toggle pilule, display = Post No Bills dans le spine mais font-tanker en code.</div>
+            <div class="finding-fix"><strong>Fix:</strong> choisir des noms canoniques uniques et les propager partout.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><h3 class="finding-title">Flows sans identifiants sources verbatim</h3><span class="finding-location">prd.md:28-30 · EXPERIENCE.md:125-152</span></header>
+            <div class="finding-note">Les parcours ne reprennent pas UJ-1, UJ-2, Story 2.1/2.2/2.3 ; compréhensibles mais moins traçables mécaniquement.</div>
+            <div class="finding-fix"><strong>Fix:</strong> préfixer les flows avec les IDs sources qu'ils couvrent.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><h3 class="finding-title">Cross-refs de tokens non entièrement fiables</h3><span class="finding-location">DESIGN.md:85,90,112 · EXPERIENCE.md:61-101</span></header>
+            <div class="finding-note">EXPERIENCE.md hérite indirectement de tokens non déclarés ({colors.foreground}/{colors.muted}), alors que {colors.success} résout correctement.</div>
+            <div class="finding-fix"><strong>Fix:</strong> rendre DESIGN.md auto-suffisant sur tous les tokens exposés.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary><h2>8. Shape fit</h2><span class="verdict-pill verdict-adequate">adequate</span></summary>
+        <div class="dim-body"><div class="dim-judgment"><p>Ordre canonique des sections, présence des sections requises par défaut et des sections déclenchées par le contexte de cette app.</p></div></div>
+        <div class="findings-list">
+          <article class="finding">
+            <header><span class="badge badge-sev-low">low</span><h3 class="finding-title">Structure macro correcte</h3><span class="finding-location">DESIGN.md:101-154 · EXPERIENCE.md:14-121</span></header>
+            <div class="finding-note">Ordre canonique respecté dans DESIGN.md, sections obligatoires présentes dans EXPERIENCE.md, Responsive & Platform / Inspiration & Anti-patterns bien inclus. Le problème est la fraîcheur du contenu responsive, pas la forme.</div>
+            <div class="finding-fix"><strong>Fix:</strong> conserver la structure mais remettre Responsive & Platform à jour avec les breakpoints réellement livrés.</div>
+          </article>
+          <article class="finding">
+            <header><span class="badge badge-sev-medium">medium</span><h3 class="finding-title">Responsive & Platform en retard sur l'implémentation</h3><span class="finding-location">EXPERIENCE.md:107-109 · catalogue-grid.tsx:4,30 · catalogue-grid-skeleton.tsx:11</span></header>
+            <div class="finding-note">La spine annonce 4-5 colonnes en md et 6+ en lg, alors que la grille réelle plafonne à 2 / 3 / 4 colonnes avec espacements précis ; le skeleton suit une autre matrice.</div>
+            <div class="finding-fix"><strong>Fix:</strong> synchroniser les breakpoints et densités avec le code ou les mocks actuels.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <div class="mechanical">
+      <h3>Mechanical notes</h3>
+      <ul>
+        <li>Les <code>sources:</code> des deux spines pointent bien vers des fichiers existants.</li>
+        <li>Référence non résoluble pour un outil mécanique : <code>imports/brets-fr-01..06</code> n'est pas un vrai chemin de fichier.</li>
+        <li>Le littéral d'exemple "Noter {n} étoiles sur 5" dans EXPERIENCE.md ressemble à une référence de token et sera extrait à tort comme <code>{n}</code> par un walker naïf ; l'échapper ou le reformuler éviterait ce faux positif.</li>
+        <li>Pas de Mermaid détecté dans les deux spines.</li>
+      </ul>
+    </div>
+
+    <footer class="report-footer">
+      <div class="meta">
+        <span>Rubric: review-rubric.md</span>
+        <span>Generated: 2026-08-15T13:15:00+02:00</span>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

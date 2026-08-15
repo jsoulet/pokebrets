@@ -189,19 +189,28 @@ export function CataloguePageClient() {
                 pour rester lisible sur ce fond). Non rendue à 0 Saveur pour
                 éviter une barre 0/0 dénuée de sens (cf. deferred-work.md :
                 état vide explicite du Catalogue). */}
-            <div
-              role="progressbar"
-              aria-valuenow={tastedInCatalogueCount}
-              aria-valuemin={0}
-              aria-valuemax={flavors.length}
-              aria-valuetext={`${tastedInCatalogueCount}/${flavors.length} saveurs goûtées`}
-              aria-label="Progression des saveurs goûtées"
-              className="bg-background/40 h-2 w-full overflow-hidden rounded-full"
-            >
+            {/* Largeur alignée sur celle de la grille de tuiles
+                (`catalogue-grid.tsx` : `max-w-6xl` + paddings responsives
+                identiques) plutôt que `w-full` du bandeau — sans quoi la
+                barre s'étirait bien au-delà de la liste des saveurs sur
+                les écrans larges. Le padding est porté par ce conteneur
+                (pas par la piste elle-même, qui doit rester pleine largeur
+                à l'intérieur, remplissage compris). */}
+            <div className="w-full max-w-6xl px-4 sm:px-6 lg:px-8">
               <div
-                className="bg-success h-full rounded-full"
-                style={{ width: `${(tastedInCatalogueCount / flavors.length) * 100}%` }}
-              />
+                role="progressbar"
+                aria-valuenow={tastedInCatalogueCount}
+                aria-valuemin={0}
+                aria-valuemax={flavors.length}
+                aria-valuetext={`${tastedInCatalogueCount}/${flavors.length} saveurs goûtées`}
+                aria-label="Progression des saveurs goûtées"
+                className="bg-background/40 h-2 w-full overflow-hidden rounded-full"
+              >
+                <div
+                  className="bg-success h-full rounded-full"
+                  style={{ width: `${(tastedInCatalogueCount / flavors.length) * 100}%` }}
+                />
+              </div>
             </div>
           </>
         ) : null}
